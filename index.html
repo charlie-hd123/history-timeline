@@ -45,27 +45,39 @@
 
   <script>
     const timeline = document.getElementById("timeline");
+    const svgObject = document.querySelector(".timeline-svg");
 
     let direction = 1;
-    const speed = 0.5;
+    const speed = 1;
 
-    function autoScroll() {
-      const maxScroll = timeline.scrollWidth - timeline.clientWidth;
+    function startAutoScroll() {
+      timeline.scrollLeft = 0;
+      direction = 1;
 
-      timeline.scrollLeft += speed * direction;
+      function autoScroll() {
+        const maxScroll = timeline.scrollWidth - timeline.clientWidth;
 
-      if (timeline.scrollLeft >= maxScroll) {
-        direction = -1;
+        if (maxScroll > 0) {
+          timeline.scrollLeft += speed * direction;
+
+          if (timeline.scrollLeft >= maxScroll - 2) {
+            direction = -1;
+          }
+
+          if (timeline.scrollLeft <= 2) {
+            direction = 1;
+          }
+        }
+
+        requestAnimationFrame(autoScroll);
       }
 
-      if (timeline.scrollLeft <= 0) {
-        direction = 1;
-      }
-
-      requestAnimationFrame(autoScroll);
+      autoScroll();
     }
 
-    autoScroll();
+    svgObject.addEventListener("load", startAutoScroll);
+
+    setTimeout(startAutoScroll, 1000);
   </script>
 </body>
 </html>
