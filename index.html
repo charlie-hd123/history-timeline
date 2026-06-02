@@ -19,17 +19,23 @@
       background: white;
     }
 
-    .timeline-container img {
+    .timeline-svg {
       height: 100vh;
       width: auto;
-      max-width: none;
+      min-width: 100%;
       display: block;
+      border: 0;
     }
   </style>
 </head>
 <body>
   <div class="timeline-container">
-    <img src="assets/timeline.svg" alt="History timeline">
+    <object
+      data="assets/timeline.svg"
+      type="image/svg+xml"
+      class="timeline-svg"
+      aria-label="History timeline">
+    </object>
   </div>
 </body>
 </html>
