@@ -1,4 +1,3 @@
-```html
 <!doctype html>
 <html lang="en">
 <head>
@@ -11,28 +10,35 @@
       margin: 0;
       width: 100%;
       height: 100%;
-      overflow: hidden;
       background: #f6f6f6;
       font-family: Arial, sans-serif;
+      overflow: auto;
+    }
+
+    .timeline-container {
+      width: 100vw;
+      height: 100vh;
+      overflow: auto;
+      background: white;
     }
 
     .timeline-frame {
-      width: 180vw;
-      height: 180vh;
+      width: 100%;
+      height: 100%;
       border: 0;
       display: block;
       background: white;
-      transform: scale(0.7);
-      transform-origin: top left;
+      zoom: 0.7;
     }
   </style>
 </head>
 <body>
-  <iframe
-    class="timeline-frame"
-    src="assets/timeline.svg"
-    title="History Timeline">
-  </iframe>
+  <div class="timeline-container">
+    <iframe
+      class="timeline-frame"
+      src="assets/timeline.svg"
+      title="History Timeline">
+    </iframe>
+  </div>
 </body>
 </html>
-```
