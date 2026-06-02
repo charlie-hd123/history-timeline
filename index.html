@@ -20,7 +20,7 @@
     }
 
     .timeline-svg {
-      width: 6000px;
+      width: 4000px;
       height: auto;
       display: block;
       border: 0;
@@ -34,7 +34,7 @@
   </style>
 </head>
 <body>
-  <div class="timeline-container">
+  <div class="timeline-container" id="timeline">
     <object
       data="assets/timeline.svg"
       type="image/svg+xml"
@@ -42,5 +42,30 @@
       aria-label="History timeline">
     </object>
   </div>
+
+  <script>
+    const timeline = document.getElementById("timeline");
+
+    let direction = 1;
+    const speed = 0.5;
+
+    function autoScroll() {
+      const maxScroll = timeline.scrollWidth - timeline.clientWidth;
+
+      timeline.scrollLeft += speed * direction;
+
+      if (timeline.scrollLeft >= maxScroll) {
+        direction = -1;
+      }
+
+      if (timeline.scrollLeft <= 0) {
+        direction = 1;
+      }
+
+      requestAnimationFrame(autoScroll);
+    }
+
+    autoScroll();
+  </script>
 </body>
 </html>
