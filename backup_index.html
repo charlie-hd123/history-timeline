@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>History Timeline</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      background: #e8e8e8;
+      font-family: Arial, sans-serif;
+    }
+
+    .timeline-container {
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      background: #e8e8e8;
+    }
+
+    .timeline-svg {
+      width: 4000px;
+      height: auto;
+      display: block;
+      border: 0;
+    }
+
+    @media (min-width: 800px) {
+      .timeline-svg {
+        width: 15000px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="timeline-container" id="timeline">
+    <object
+      data="assets/timeline.svg"
+      type="image/svg+xml"
+      class="timeline-svg"
+      aria-label="History timeline">
+    </object>
+  </div>
+
+  <script>
+    const timeline = document.getElementById("timeline");
+    const svgObject = document.querySelector(".timeline-svg");
+
+    let direction = 1;
+    const speed = 1;
+
+    function startAutoScroll() {
+      timeline.scrollLeft = 0;
+      direction = 1;
+
+      function autoScroll() {
+        const maxScroll = timeline.scrollWidth - timeline.clientWidth;
+
+        if (maxScroll > 0) {
+          timeline.scrollLeft += speed * direction;
+
+          if (timeline.scrollLeft >= maxScroll - 2) {
+            direction = -1;
+          }
+
+          if (timeline.scrollLeft <= 2) {
+            direction = 1;
+          }
+        }
+
+        requestAnimationFrame(autoScroll);
+      }
+
+      autoScroll();
+    }
+
+    svgObject.addEventListener("load", startAutoScroll);
+
+    setTimeout(startAutoScroll, 1000);
+  </script>
+</body>
+</html>
