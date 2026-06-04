@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>History Timeline</title>
+
   <style>
     html,
     body {
@@ -33,6 +34,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="timeline-container" id="timeline">
     <object
@@ -48,31 +50,49 @@
     const svgObject = document.querySelector(".timeline-svg");
 
     let direction = 1;
-    const speed = 1;
+
+    // Pixels per second
+    const speed = 5;
+
+    let precisePosition = 0;
+    let lastTime = null;
 
     function startAutoScroll() {
       timeline.scrollLeft = 0;
+      precisePosition = 0;
       direction = 1;
+      lastTime = null;
 
-      function autoScroll() {
+      function autoScroll(timestamp) {
+        if (!lastTime) {
+          lastTime = timestamp;
+        }
+
+        const deltaTime = (timestamp - lastTime) / 1000;
+        lastTime = timestamp;
+
         const maxScroll = timeline.scrollWidth - timeline.clientWidth;
 
         if (maxScroll > 0) {
-          timeline.scrollLeft += speed * direction;
+          precisePosition += speed * direction * deltaTime;
 
-          if (timeline.scrollLeft >= maxScroll - 2) {
+          if (precisePosition >= maxScroll) {
+            precisePosition = maxScroll;
             direction = -1;
           }
 
-          if (timeline.scrollLeft <= 2) {
+          if (precisePosition <= 0) {
+            precisePosition = 0;
             direction = 1;
           }
+
+          timeline.scrollLeft = precisePosition;
         }
 
         requestAnimationFrame(autoScroll);
       }
 
-      autoScroll();
+      requestAnimationFrame(autoScroll);
     }
 
     svgObject.addEventListener("load", startAutoScroll);
