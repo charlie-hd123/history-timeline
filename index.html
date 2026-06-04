@@ -2,93 +2,158 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <!-- Sets the character encoding so the browser can correctly read text -->
+  
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Makes the page scale properly on phones and tablets -->
+
   <title>History Timeline</title>
+  <!-- Text shown in the browser tab -->
+
   <style>
     html,
     body {
       margin: 0;
+      /* Removes default browser spacing around the page */
+
       background: #e8e8e8;
+      /* Sets the page background colour */
+
       font-family: Arial, sans-serif;
+      /* Sets the default font for the page */
     }
 
     .timeline-container {
       width: 100%;
+      /* Makes the container stretch across the full page width */
+
       overflow-x: auto;
+      /* Allows horizontal scrolling if the content is wider than the screen */
+
       overflow-y: hidden;
+      /* Prevents vertical scrolling inside this container */
+
       background: #e8e8e8;
+      /* Matches the page background */
     }
 
     .timeline-svg {
       width: 4000px;
+      /* Gives the SVG a very wide fixed width so it can extend horizontally */
+
       height: auto;
+      /* Keeps the SVG's height proportional */
+
       display: block;
+      /* Removes extra inline spacing around the object */
+
       border: 0;
+      /* Removes any border around the SVG object */
     }
 
     @media (min-width: 800px) {
+      /* This rule applies on screens 800px wide or more */
+
       .timeline-svg {
         width: 15000px;
+        /* Makes the timeline much wider on larger screens */
       }
     }
   </style>
 </head>
 <body>
   <div class="timeline-container" id="timeline">
+    <!-- This container holds the timeline and is the element that gets scrolled -->
+
     <object
       data="assets/timeline.svg"
       type="image/svg+xml"
       class="timeline-svg"
       aria-label="History timeline">
+      <!-- Loads the SVG file into the page -->
+      <!-- aria-label gives screen readers a description of what the object is -->
     </object>
   </div>
 
   <script>
     const timeline = document.getElementById("timeline");
+    // Finds the timeline container so JavaScript can control its scroll position
+
     const svgObject = document.querySelector(".timeline-svg");
+    // Finds the SVG object so we can detect when it finishes loading
 
     let direction = 1;
+    // Controls which way the auto-scroll moves:
+    // 1 = to the right, -1 = to the left
+
     const speed = 1;
+    // How many pixels the timeline moves each time it scrolls
+
     const moveInterval = 2000; // 1 pixel per 2 seconds
+    // How long to wait between each scroll movement, in milliseconds
 
     let lastMove = 0;
+    // Stores the last time the timeline moved
 
     function startAutoScroll() {
       timeline.scrollLeft = 0;
+      // Resets the timeline back to the far left when scrolling starts
+
       direction = 1;
+      // Starts by moving to the right
+
       lastMove = 0;
+      // Clears the last movement time so the animation starts fresh
 
       function autoScroll(timestamp) {
+        // This function runs over and over using requestAnimationFrame
+        // timestamp is the current time provided by the browser
+
         const maxScroll = timeline.scrollWidth - timeline.clientWidth;
+        // Calculates the furthest scroll position possible
 
         if (maxScroll > 0) {
+          // Only scroll if the content is actually wider than the visible area
+
           if (!lastMove) {
             lastMove = timestamp;
+            // Saves the first timestamp the animation receives
           }
 
           if (timestamp - lastMove >= moveInterval) {
+            // Only move once enough time has passed
+
             timeline.scrollLeft += speed * direction;
+            // Moves the container left or right depending on direction
+
             lastMove = timestamp;
+            // Updates the last movement time
 
             if (timeline.scrollLeft >= maxScroll - 2) {
               direction = -1;
+              // If near the far right, reverse direction and move back left
             }
 
             if (timeline.scrollLeft <= 2) {
               direction = 1;
+              // If near the far left, reverse direction and move right again
             }
           }
         }
 
         requestAnimationFrame(autoScroll);
+        // Keeps the animation going smoothly in a browser-friendly way
       }
 
       requestAnimationFrame(autoScroll);
+      // Starts the animation loop
     }
 
     svgObject.addEventListener("load", startAutoScroll);
+    // Waits for the SVG to finish loading before starting the auto-scroll
 
     setTimeout(startAutoScroll, 1000);
+    // Backup start in case the load event doesn't fire quickly enough
   </script>
 </body>
 </html>
