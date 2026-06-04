@@ -50,17 +50,20 @@
     const svgObject = document.querySelector(".timeline-svg");
 
     let direction = 1;
-
-    // Pixels per second
-    const speed = 5;
-
-    let precisePosition = 0;
+    let progress = 0;
     let lastTime = null;
 
+    /*
+      Speed settings:
+      0.01  = ~100 seconds end-to-end
+      0.005 = ~200 seconds end-to-end
+      0.002 = ~500 seconds end-to-end
+    */
+    const speed = 0.005;
+
     function startAutoScroll() {
-      timeline.scrollLeft = 0;
-      precisePosition = 0;
       direction = 1;
+      progress = 0;
       lastTime = null;
 
       function autoScroll(timestamp) {
@@ -74,19 +77,19 @@
         const maxScroll = timeline.scrollWidth - timeline.clientWidth;
 
         if (maxScroll > 0) {
-          precisePosition += speed * direction * deltaTime;
+          progress += speed * direction * deltaTime;
 
-          if (precisePosition >= maxScroll) {
-            precisePosition = maxScroll;
+          if (progress >= 1) {
+            progress = 1;
             direction = -1;
           }
 
-          if (precisePosition <= 0) {
-            precisePosition = 0;
+          if (progress <= 0) {
+            progress = 0;
             direction = 1;
           }
 
-          timeline.scrollLeft = precisePosition;
+          timeline.scrollLeft = progress * maxScroll;
         }
 
         requestAnimationFrame(autoScroll);
@@ -97,6 +100,7 @@
 
     svgObject.addEventListener("load", startAutoScroll);
 
+    // Fallback in case the SVG load event doesn't fire
     setTimeout(startAutoScroll, 1000);
   </script>
 </body>
