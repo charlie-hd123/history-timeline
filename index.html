@@ -187,48 +187,58 @@
     const fullscreenBtn = document.getElementById("fullscreenBtn");
     // Finds the fullscreen button
 
-    fullscreenBtn.addEventListener("click", async () => {
-      // Toggles fullscreen mode when the button is clicked
+    const isIOS =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    // Detects iPhone and iPad, including iPadOS which often reports itself as Mac
 
-      if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
-        fullscreenBtn.textContent = "Exit Full Screen";
-      } else {
-        await document.exitFullscreen();
-        fullscreenBtn.textContent = "Full Screen";
+    if (isIOS) {
+      fullscreenBtn.style.display = "none";
+      // Hides the fullscreen button on iPhone and iPad
+    } else {
+      fullscreenBtn.addEventListener("click", async () => {
+        // Toggles fullscreen mode when the button is clicked
+
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+          fullscreenBtn.textContent = "Exit Full Screen";
+        } else {
+          await document.exitFullscreen();
+          fullscreenBtn.textContent = "Full Screen";
+        }
+      });
+
+      document.addEventListener("fullscreenchange", () => {
+        // Updates button text if fullscreen is exited another way
+
+        fullscreenBtn.textContent = document.fullscreenElement
+          ? "Exit Full Screen"
+          : "Full Screen";
+      });
+
+      let hideButtonTimer;
+      // Stores the timer used to hide the button
+
+      function showButton() {
+        // Makes the button visible and restarts the hide countdown
+
+        fullscreenBtn.classList.remove("hidden");
+
+        clearTimeout(hideButtonTimer);
+
+        hideButtonTimer = setTimeout(() => {
+          fullscreenBtn.classList.add("hidden");
+        }, 3000);
       }
-    });
 
-    document.addEventListener("fullscreenchange", () => {
-      // Updates button text if fullscreen is exited another way
+      if (window.matchMedia("(pointer: fine)").matches) {
+        // Only auto-hide on devices that have a mouse cursor
 
-      fullscreenBtn.textContent = document.fullscreenElement
-        ? "Exit Full Screen"
-        : "Full Screen";
-    });
+        document.addEventListener("mousemove", showButton);
 
-    let hideButtonTimer;
-    // Stores the timer used to hide the button
-
-    function showButton() {
-      // Makes the button visible and restarts the hide countdown
-
-      fullscreenBtn.classList.remove("hidden");
-
-      clearTimeout(hideButtonTimer);
-
-      hideButtonTimer = setTimeout(() => {
-        fullscreenBtn.classList.add("hidden");
-      }, 5000);
-    }
-
-    if (window.matchMedia("(pointer: fine)").matches) {
-      // Only auto-hide on devices that have a mouse cursor
-
-      document.addEventListener("mousemove", showButton);
-
-      showButton();
-      // Start visible, then hide after 3 seconds
+        showButton();
+        // Start visible, then hide after 3 seconds
+      }
     }
   </script>
 </body>
