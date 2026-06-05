@@ -231,14 +231,16 @@
         }, 3000);
       }
 
-      if (window.matchMedia("(pointer: fine)").matches) {
-        // Only auto-hide on devices that have a mouse cursor
+      document.addEventListener("mousemove", showButton);
+      // Reappears when the mouse moves
 
-        document.addEventListener("mousemove", showButton);
+      document.addEventListener("touchstart", showButton, {
+        passive: true
+      });
+      // Reappears when the screen is touched
 
-        showButton();
-        // Start visible, then hide after 3 seconds
-      }
+      showButton();
+      // Start visible, then hide after 3 seconds
     }
   </script>
 </body>
