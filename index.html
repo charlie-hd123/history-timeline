@@ -36,6 +36,14 @@
       border-radius: 6px;
       background: rgba(0,0,0,0.7);
       color: white;
+
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+
+    .fullscreen-btn.hidden {
+      opacity: 0;
+      pointer-events: none;
     }
 
     .timeline-container {
@@ -198,6 +206,30 @@
         ? "Exit Full Screen"
         : "Full Screen";
     });
+
+    let hideButtonTimer;
+    // Stores the timer used to hide the button
+
+    function showButton() {
+      // Makes the button visible and restarts the hide countdown
+
+      fullscreenBtn.classList.remove("hidden");
+
+      clearTimeout(hideButtonTimer);
+
+      hideButtonTimer = setTimeout(() => {
+        fullscreenBtn.classList.add("hidden");
+      }, 3000);
+    }
+
+    if (window.matchMedia("(pointer: fine)").matches) {
+      // Only auto-hide on devices that have a mouse cursor
+
+      document.addEventListener("mousemove", showButton);
+
+      showButton();
+      // Start visible, then hide after 3 seconds
+    }
   </script>
 </body>
 </html>
