@@ -206,8 +206,6 @@
           await document.exitFullscreen();
           fullscreenBtn.textContent = "Full Screen";
         }
-
-        showButton();
       });
 
       document.addEventListener("fullscreenchange", () => {
@@ -216,8 +214,6 @@
         fullscreenBtn.textContent = document.fullscreenElement
           ? "Exit Full Screen"
           : "Full Screen";
-
-        showButton();
       });
 
       let hideButtonTimer;
@@ -235,15 +231,14 @@
         }, 3000);
       }
 
-      // Listen on window so it works more reliably in fullscreen
-      window.addEventListener("mousemove", showButton, { passive: true });
-      window.addEventListener("pointermove", showButton, { passive: true });
-      window.addEventListener("touchstart", showButton, { passive: true });
-      window.addEventListener("touchmove", showButton, { passive: true });
-      window.addEventListener("keydown", showButton);
+      if (window.matchMedia("(pointer: fine)").matches) {
+        // Only auto-hide on devices that have a mouse cursor
 
-      // Start visible, then hide after 3 seconds
-      showButton();
+        document.addEventListener("mousemove", showButton);
+
+        showButton();
+        // Start visible, then hide after 3 seconds
+      }
     }
   </script>
 </body>
