@@ -206,6 +206,8 @@
           await document.exitFullscreen();
           fullscreenBtn.textContent = "Full Screen";
         }
+
+        showButton();
       });
 
       document.addEventListener("fullscreenchange", () => {
@@ -216,7 +218,6 @@
           : "Full Screen";
 
         showButton();
-        // Makes the button visible again after fullscreen changes
       });
 
       let hideButtonTimer;
@@ -234,12 +235,12 @@
         }, 3000);
       }
 
-      // Show the button again when the user interacts with the page
-      document.addEventListener("mousemove", showButton, { passive: true });
-      document.addEventListener("pointermove", showButton, { passive: true });
-      document.addEventListener("touchstart", showButton, { passive: true });
-      document.addEventListener("touchmove", showButton, { passive: true });
-      document.addEventListener("keydown", showButton);
+      // Listen on window so it works more reliably in fullscreen
+      window.addEventListener("mousemove", showButton, { passive: true });
+      window.addEventListener("pointermove", showButton, { passive: true });
+      window.addEventListener("touchstart", showButton, { passive: true });
+      window.addEventListener("touchmove", showButton, { passive: true });
+      window.addEventListener("keydown", showButton);
 
       // Start visible, then hide after 3 seconds
       showButton();
