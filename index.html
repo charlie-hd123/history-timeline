@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -31,6 +30,24 @@
       pointer-events: none;
     }
 
+    #dpad {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: repeat(3, 50px);
+      grid-template-rows: repeat(3, 50px);
+      gap: 6px;
+      opacity: 1;
+      transition: opacity 0.4s ease;
+    }
+
+    #dpad.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
     button {
       padding: 12px 16px;
       border: 0;
@@ -39,6 +56,27 @@
       color: white;
       font-size: 18px;
       cursor: pointer;
+      min-width: 50px;
+    }
+
+    #upBtn {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    #leftBtn {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    #rightBtn {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    #downBtn {
+      grid-column: 2;
+      grid-row: 3;
     }
 
     /* Timeline viewing area */
@@ -80,6 +118,14 @@
     <button id="zoomOutBtn">-</button>
   </div>
 
+  <!-- Movement buttons in a D-pad layout -->
+  <div id="dpad">
+    <button id="upBtn">↑</button>
+    <button id="leftBtn">←</button>
+    <button id="rightBtn">→</button>
+    <button id="downBtn">↓</button>
+  </div>
+
   <!-- Timeline SVG -->
   <div id="timeline">
     <object id="timelineSvg" data="assets/timeline.svg" type="image/svg+xml" aria-label="History timeline"></object>
@@ -90,9 +136,14 @@
     const timeline = document.getElementById("timeline");
     const timelineSvg = document.getElementById("timelineSvg");
     const controls = document.getElementById("controls");
+    const dpad = document.getElementById("dpad");
     const fullscreenBtn = document.getElementById("fullscreenBtn");
     const zoomInBtn = document.getElementById("zoomInBtn");
     const zoomOutBtn = document.getElementById("zoomOutBtn");
+    const leftBtn = document.getElementById("leftBtn");
+    const rightBtn = document.getElementById("rightBtn");
+    const upBtn = document.getElementById("upBtn");
+    const downBtn = document.getElementById("downBtn");
 
     let direction = 1;
     let zoom = 1;
@@ -106,9 +157,11 @@
 
     function showControls() {
       controls.classList.remove("hidden");
+      dpad.classList.remove("hidden");
       clearTimeout(hideControlsTimer);
       hideControlsTimer = setTimeout(() => {
         controls.classList.add("hidden");
+        dpad.classList.add("hidden");
       }, 5000);
     }
 
@@ -146,8 +199,28 @@
       showControls();
     });
 
-    zoomInBtn.addEventListener("click", () => setZoom(zoom + 0.15));
-    zoomOutBtn.addEventListener("click", () => setZoom(zoom - 0.15));
+    zoomInBtn.addEventListener("click", () => setZoom(zoom + 0.4));
+    zoomOutBtn.addEventListener("click", () => setZoom(zoom - 0.4));
+
+    leftBtn.addEventListener("click", () => {
+      timeline.scrollBy({ left: -400, behavior: "smooth" });
+      showControls();
+    });
+
+    rightBtn.addEventListener("click", () => {
+      timeline.scrollBy({ left: 400, behavior: "smooth" });
+      showControls();
+    });
+
+    upBtn.addEventListener("click", () => {
+      window.scrollBy({ top: -300, behavior: "smooth" });
+      showControls();
+    });
+
+    downBtn.addEventListener("click", () => {
+      window.scrollBy({ top: 300, behavior: "smooth" });
+      showControls();
+    });
 
     ["scroll", "wheel", "touchmove", "pointermove", "keydown"].forEach((eventName) => {
       document.addEventListener(eventName, showControls, { passive: true });
@@ -178,4 +251,3 @@
   </script>
 </body>
 </html>
-```
