@@ -102,7 +102,7 @@
 
     /* Mobile timeline size */
     object {
-      width: 5200px;
+      width: 7600px;
       height: auto;
       display: block;
       pointer-events: none;
@@ -111,14 +111,14 @@
     /* Tablet timeline size */
     @media (min-width: 800px) {
       object {
-        width: 9000px;
+        width: 13000px;
       }
     }
 
     /* Computer timeline size */
     @media (min-width: 1200px) {
       object {
-        width: 11000px;
+        width: 16000px;
       }
     }
   </style>
@@ -163,9 +163,9 @@
     let hideControlsTimer;
 
     function getBaseWidth() {
-      if (window.innerWidth >= 1200) return 11000;
-      if (window.innerWidth >= 800) return 9000;
-      return 5200;
+      if (window.innerWidth >= 1200) return 16000;
+      if (window.innerWidth >= 800) return 13000;
+      return 7600;
     }
 
     function showControls() {
