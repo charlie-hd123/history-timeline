@@ -2,199 +2,67 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>History Timeline</title>
 
   <style>
-    html,
+    /* Page basics */
     body {
       margin: 0;
       background: #e8e8e8;
       font-family: Arial, sans-serif;
-      touch-action: pan-x pan-y pinch-zoom;
     }
 
-    .fullscreen-btn {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      z-index: 9999;
-      padding: 10px 14px;
-      font-size: 14px;
-      cursor: pointer;
-      border: none;
-      border-radius: 6px;
-      background: rgba(0,0,0,0.7);
-      color: white;
-      opacity: 1;
-      transition: opacity 0.5s ease;
-    }
-
-    .fullscreen-btn.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .timeline-container {
+    /* Timeline viewing area */
+    #timeline {
       width: 100%;
-      min-height: 100vh;
       overflow-x: auto;
       overflow-y: hidden;
       background: #e8e8e8;
-      touch-action: pan-x pan-y pinch-zoom;
     }
 
-    .timeline-svg {
+    /* Timeline SVG size */
+    object {
       width: 2600px;
       height: auto;
       display: block;
-      border: 0;
     }
 
+    /* Wider timeline on tablets and computers */
     @media (min-width: 800px) {
-      .timeline-svg {
+      object {
         width: 5200px;
       }
     }
 
     @media (min-width: 1200px) {
-      .timeline-svg {
+      object {
         width: 6500px;
       }
     }
   </style>
 </head>
 <body>
-
-  <button class="fullscreen-btn" id="fullscreenBtn">
-    Full Screen
-  </button>
-
-  <div class="timeline-container" id="timeline">
-    <object
-      data="assets/timeline.svg"
-      type="image/svg+xml"
-      class="timeline-svg"
-      aria-label="History timeline">
-    </object>
+  <!-- Timeline SVG -->
+  <div id="timeline">
+    <object data="assets/timeline.svg" type="image/svg+xml" aria-label="History timeline"></object>
   </div>
 
   <script>
+    // Auto-scrolls the timeline slowly left and right
     const timeline = document.getElementById("timeline");
-    const svgObject = document.querySelector(".timeline-svg");
-
     let direction = 1;
-    const speed = 1;
-    const moveInterval = 2000;
-    let lastMove = 0;
-    let autoScrollStarted = false;
 
-    function startAutoScroll() {
-      if (autoScrollStarted) {
-        return;
-      }
+    setInterval(() => {
+      const maxScroll = timeline.scrollWidth - timeline.clientWidth;
 
-      autoScrollStarted = true;
-      timeline.scrollLeft = 0;
-      direction = 1;
-      lastMove = 0;
+      if (maxScroll <= 0) return;
 
-      function autoScroll(timestamp) {
-        const maxScroll = timeline.scrollWidth - timeline.clientWidth;
+      timeline.scrollLeft += direction;
 
-        if (maxScroll > 0) {
-          if (!lastMove) {
-            lastMove = timestamp;
-          }
-
-          if (timestamp - lastMove >= moveInterval) {
-            timeline.scrollLeft += speed * direction;
-            lastMove = timestamp;
-
-            if (timeline.scrollLeft >= maxScroll - 2) {
-              direction = -1;
-            }
-
-            if (timeline.scrollLeft <= 2) {
-              direction = 1;
-            }
-          }
-        }
-
-        requestAnimationFrame(autoScroll);
-      }
-
-      requestAnimationFrame(autoScroll);
-    }
-
-    svgObject.addEventListener("load", startAutoScroll);
-    setTimeout(startAutoScroll, 1000);
-
-    const fullscreenBtn = document.getElementById("fullscreenBtn");
-
-    const isIOS =
-      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-
-    if (isIOS) {
-      fullscreenBtn.style.display = "none";
-    } else {
-      fullscreenBtn.addEventListener("click", async () => {
-        try {
-          if (!document.fullscreenElement) {
-            await document.body.requestFullscreen();
-            fullscreenBtn.textContent = "Exit Full Screen";
-          } else {
-            await document.exitFullscreen();
-            fullscreenBtn.textContent = "Full Screen";
-          }
-
-          showButton();
-        } catch (error) {
-          console.warn("Fullscreen could not be toggled", error);
-        }
-      });
-
-      document.addEventListener("fullscreenchange", () => {
-        fullscreenBtn.textContent = document.fullscreenElement
-          ? "Exit Full Screen"
-          : "Full Screen";
-
-        showButton();
-      });
-
-      let hideButtonTimer;
-
-      function showButton() {
-        fullscreenBtn.classList.remove("hidden");
-
-        clearTimeout(hideButtonTimer);
-
-        hideButtonTimer = setTimeout(() => {
-          fullscreenBtn.classList.add("hidden");
-        }, 3000);
-      }
-
-      const movementEvents = [
-        "mousemove",
-        "mousedown",
-        "wheel",
-        "touchstart",
-        "touchmove",
-        "pointerdown",
-        "pointermove",
-        "scroll",
-        "keydown"
-      ];
-
-      movementEvents.forEach((eventName) => {
-        document.addEventListener(eventName, showButton, { passive: true });
-      });
-
-      showButton();
-    }
+      if (timeline.scrollLeft >= maxScroll) direction = -1;
+      if (timeline.scrollLeft <= 0) direction = 1;
+    }, 2000);
   </script>
 </body>
 </html>
