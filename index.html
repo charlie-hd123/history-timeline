@@ -21,6 +21,8 @@
       left: 10px;
       z-index: 10;
       display: flex;
+      flex-direction: column;
+      align-items: flex-start;
       gap: 6px;
       opacity: 1;
       transition: opacity 0.4s ease;
@@ -64,6 +66,11 @@
       padding: 14px 20px;
       font-size: 20px;
       min-width: 58px;
+    }
+
+    #zoomControls {
+      display: flex;
+      gap: 6px;
     }
 
     #dpad button {
@@ -127,8 +134,11 @@
   <!-- Buttons that stay fixed in the top-left corner -->
   <div id="controls">
     <button id="fullscreenBtn">Full Screen</button>
-    <button id="zoomInBtn">+</button>
-    <button id="zoomOutBtn">-</button>
+    <button id="autoScrollBtn">Auto Scroll</button>
+    <div id="zoomControls">
+      <button id="zoomInBtn">+</button>
+      <button id="zoomOutBtn">-</button>
+    </div>
   </div>
 
   <!-- Movement buttons in a D-pad layout -->
@@ -151,6 +161,7 @@
     const controls = document.getElementById("controls");
     const dpad = document.getElementById("dpad");
     const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const autoScrollBtn = document.getElementById("autoScrollBtn");
     const zoomInBtn = document.getElementById("zoomInBtn");
     const zoomOutBtn = document.getElementById("zoomOutBtn");
     const leftBtn = document.getElementById("leftBtn");
@@ -161,6 +172,8 @@
     let direction = 1;
     let zoom = 1;
     let hideControlsTimer;
+    let autoScrollTimer;
+    let autoScrolling = false;
 
     function getBaseWidth() {
       if (window.innerWidth >= 1200) return 16000;
@@ -212,6 +225,38 @@
       showControls();
     });
 
+    function startAutoScroll() {
+      autoScrolling = true;
+      autoScrollBtn.textContent = "Stop Scroll";
+
+      autoScrollTimer = setInterval(() => {
+        const maxScroll = timeline.scrollWidth - timeline.clientWidth;
+
+        if (maxScroll <= 0) return;
+
+        timeline.scrollLeft += direction * 2;
+
+        if (timeline.scrollLeft >= maxScroll) direction = -1;
+        if (timeline.scrollLeft <= 0) direction = 1;
+      }, 20);
+    }
+
+    function stopAutoScroll() {
+      autoScrolling = false;
+      autoScrollBtn.textContent = "Auto Scroll";
+      clearInterval(autoScrollTimer);
+    }
+
+    autoScrollBtn.addEventListener("click", () => {
+      if (autoScrolling) {
+        stopAutoScroll();
+      } else {
+        startAutoScroll();
+      }
+
+      showControls();
+    });
+
     zoomInBtn.addEventListener("click", () => setZoom(zoom + 0.4));
     zoomOutBtn.addEventListener("click", () => setZoom(zoom - 0.4));
 
@@ -248,17 +293,6 @@
       visualViewport.addEventListener("resize", showControls);
       visualViewport.addEventListener("scroll", showControls);
     }
-
-    setInterval(() => {
-      const maxScroll = timeline.scrollWidth - timeline.clientWidth;
-
-      if (maxScroll <= 0) return;
-
-      timeline.scrollLeft += direction;
-
-      if (timeline.scrollLeft >= maxScroll) direction = -1;
-      if (timeline.scrollLeft <= 0) direction = 1;
-    }, 2000);
 
     showControls();
   </script>
