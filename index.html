@@ -2,28 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <!-- Sets the character encoding so the browser can correctly read text -->
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Makes the page scale properly on phones and tablets -->
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
 
   <title>History Timeline</title>
-  <!-- Text shown in the browser tab -->
 
   <style>
     html,
     body {
       margin: 0;
-      /* Removes default browser spacing around the page */
-
       background: #e8e8e8;
-      /* Sets the page background colour */
-
       font-family: Arial, sans-serif;
-      /* Sets the default font for the page */
+      touch-action: pan-x pan-y pinch-zoom;
     }
 
-    /* Fullscreen button */
     .fullscreen-btn {
       position: fixed;
       top: 10px;
@@ -36,7 +28,6 @@
       border-radius: 6px;
       background: rgba(0,0,0,0.7);
       color: white;
-
       opacity: 1;
       transition: opacity 0.5s ease;
     }
@@ -48,180 +39,135 @@
 
     .timeline-container {
       width: 100%;
-      /* Makes the container stretch across the full page width */
-
+      min-height: 100vh;
       overflow-x: auto;
-      /* Allows horizontal scrolling if the content is wider than the screen */
-
       overflow-y: hidden;
-      /* Prevents vertical scrolling inside this container */
-
       background: #e8e8e8;
-      /* Matches the page background */
+      touch-action: pan-x pan-y pinch-zoom;
     }
 
     .timeline-svg {
-      width: 4000px;
-      /* Gives the SVG a very wide fixed width so it can extend horizontally */
-
+      width: 2600px;
       height: auto;
-      /* Keeps the SVG's height proportional */
-
       display: block;
-      /* Removes extra inline spacing around the object */
-
       border: 0;
-      /* Removes any border around the SVG object */
     }
 
     @media (min-width: 800px) {
-      /* This rule applies on screens 800px wide or more */
-
       .timeline-svg {
-        width: 15000px;
-        /* Makes the timeline much wider on larger screens */
+        width: 5200px;
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .timeline-svg {
+        width: 6500px;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- Fullscreen toggle button -->
   <button class="fullscreen-btn" id="fullscreenBtn">
     Full Screen
   </button>
 
   <div class="timeline-container" id="timeline">
-    <!-- This container holds the timeline and is the element that gets scrolled -->
-
     <object
       data="assets/timeline.svg"
       type="image/svg+xml"
       class="timeline-svg"
       aria-label="History timeline">
-      <!-- Loads the SVG file into the page -->
-      <!-- aria-label gives screen readers a description of what the object is -->
     </object>
   </div>
 
   <script>
     const timeline = document.getElementById("timeline");
-    // Finds the timeline container so JavaScript can control its scroll position
-
     const svgObject = document.querySelector(".timeline-svg");
-    // Finds the SVG object so we can detect when it finishes loading
 
     let direction = 1;
-    // Controls which way the auto-scroll moves:
-    // 1 = to the right, -1 = to the left
-
     const speed = 1;
-    // How many pixels the timeline moves each time it scrolls
-
-    const moveInterval = 2000; // 1 pixel per 2 seconds
-    // How long to wait between each scroll movement, in milliseconds
-
+    const moveInterval = 2000;
     let lastMove = 0;
-    // Stores the last time the timeline moved
+    let autoScrollStarted = false;
 
     function startAutoScroll() {
+      if (autoScrollStarted) {
+        return;
+      }
+
+      autoScrollStarted = true;
       timeline.scrollLeft = 0;
-      // Resets the timeline back to the far left when scrolling starts
-
       direction = 1;
-      // Starts by moving to the right
-
       lastMove = 0;
-      // Clears the last movement time so the animation starts fresh
 
       function autoScroll(timestamp) {
-        // This function runs over and over using requestAnimationFrame
-        // timestamp is the current time provided by the browser
-
         const maxScroll = timeline.scrollWidth - timeline.clientWidth;
-        // Calculates the furthest scroll position possible
 
         if (maxScroll > 0) {
-          // Only scroll if the content is actually wider than the visible area
-
           if (!lastMove) {
             lastMove = timestamp;
-            // Saves the first timestamp the animation receives
           }
 
           if (timestamp - lastMove >= moveInterval) {
-            // Only move once enough time has passed
-
             timeline.scrollLeft += speed * direction;
-            // Moves the container left or right depending on direction
-
             lastMove = timestamp;
-            // Updates the last movement time
 
             if (timeline.scrollLeft >= maxScroll - 2) {
               direction = -1;
-              // If near the far right, reverse direction and move back left
             }
 
             if (timeline.scrollLeft <= 2) {
               direction = 1;
-              // If near the far left, reverse direction and move right again
             }
           }
         }
 
         requestAnimationFrame(autoScroll);
-        // Keeps the animation going smoothly in a browser-friendly way
       }
 
       requestAnimationFrame(autoScroll);
-      // Starts the animation loop
     }
 
     svgObject.addEventListener("load", startAutoScroll);
-    // Waits for the SVG to finish loading before starting the auto-scroll
-
     setTimeout(startAutoScroll, 1000);
-    // Backup start in case the load event doesn't fire quickly enough
 
     const fullscreenBtn = document.getElementById("fullscreenBtn");
-    // Finds the fullscreen button
 
     const isIOS =
       /iPad|iPhone|iPod/.test(navigator.userAgent) ||
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    // Detects iPhone and iPad, including iPadOS which often reports itself as Mac
 
     if (isIOS) {
       fullscreenBtn.style.display = "none";
-      // Hides the fullscreen button on iPhone and iPad
     } else {
       fullscreenBtn.addEventListener("click", async () => {
-        // Toggles fullscreen mode when the button is clicked
+        try {
+          if (!document.fullscreenElement) {
+            await document.body.requestFullscreen();
+            fullscreenBtn.textContent = "Exit Full Screen";
+          } else {
+            await document.exitFullscreen();
+            fullscreenBtn.textContent = "Full Screen";
+          }
 
-        if (!document.fullscreenElement) {
-          await document.documentElement.requestFullscreen();
-          fullscreenBtn.textContent = "Exit Full Screen";
-        } else {
-          await document.exitFullscreen();
-          fullscreenBtn.textContent = "Full Screen";
+          showButton();
+        } catch (error) {
+          console.warn("Fullscreen could not be toggled", error);
         }
       });
 
       document.addEventListener("fullscreenchange", () => {
-        // Updates button text if fullscreen is exited another way
-
         fullscreenBtn.textContent = document.fullscreenElement
           ? "Exit Full Screen"
           : "Full Screen";
+
+        showButton();
       });
 
       let hideButtonTimer;
-      // Stores the timer used to hide the button
 
       function showButton() {
-        // Makes the button visible and restarts the hide countdown
-
         fullscreenBtn.classList.remove("hidden");
 
         clearTimeout(hideButtonTimer);
@@ -231,14 +177,23 @@
         }, 3000);
       }
 
-      if (window.matchMedia("(pointer: fine)").matches) {
-        // Only auto-hide on devices that have a mouse cursor
+      const movementEvents = [
+        "mousemove",
+        "mousedown",
+        "wheel",
+        "touchstart",
+        "touchmove",
+        "pointerdown",
+        "pointermove",
+        "scroll",
+        "keydown"
+      ];
 
-        document.addEventListener("mousemove", showButton);
+      movementEvents.forEach((eventName) => {
+        document.addEventListener(eventName, showButton, { passive: true });
+      });
 
-        showButton();
-        // Start visible, then hide after 3 seconds
-      }
+      showButton();
     }
   </script>
 </body>
