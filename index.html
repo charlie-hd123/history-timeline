@@ -13,6 +13,33 @@
       font-family: Arial, sans-serif;
     }
 
+    /* Fixed buttons */
+    #controls {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      display: flex;
+      gap: 6px;
+      opacity: 1;
+      transition: opacity 0.4s ease;
+    }
+
+    #controls.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    button {
+      padding: 9px 12px;
+      border: 0;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.72);
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
     /* Timeline viewing area */
     #timeline {
       width: 100%;
@@ -26,6 +53,7 @@
       width: 3400px;
       height: auto;
       display: block;
+      pointer-events: none;
     }
 
     /* Tablet timeline size */
@@ -44,15 +72,95 @@
   </style>
 </head>
 <body>
+  <!-- Buttons that stay fixed in the top-left corner -->
+  <div id="controls">
+    <button id="fullscreenBtn">Full Screen</button>
+    <button id="zoomInBtn">+</button>
+    <button id="zoomOutBtn">-</button>
+  </div>
+
   <!-- Timeline SVG -->
   <div id="timeline">
-    <object data="assets/timeline.svg" type="image/svg+xml" aria-label="History timeline"></object>
+    <object id="timelineSvg" data="assets/timeline.svg" type="image/svg+xml" aria-label="History timeline"></object>
   </div>
 
   <script>
     // Auto-scrolls the timeline slowly left and right
     const timeline = document.getElementById("timeline");
+    const timelineSvg = document.getElementById("timelineSvg");
+    const controls = document.getElementById("controls");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const zoomInBtn = document.getElementById("zoomInBtn");
+    const zoomOutBtn = document.getElementById("zoomOutBtn");
+
     let direction = 1;
+    let zoom = 1;
+    let hideControlsTimer;
+
+    function getBaseWidth() {
+      if (window.innerWidth >= 1200) return 7200;
+      if (window.innerWidth >= 800) return 6200;
+      return 3400;
+    }
+
+    function showControls() {
+      controls.classList.remove("hidden");
+      clearTimeout(hideControlsTimer);
+      hideControlsTimer = setTimeout(() => {
+        controls.classList.add("hidden");
+      }, 5000);
+    }
+
+    function setZoom(nextZoom) {
+      const oldWidth = timelineSvg.offsetWidth;
+      const oldCenter = timeline.scrollLeft + timeline.clientWidth / 2;
+
+      zoom = Math.min(Math.max(nextZoom, 0.5), 3);
+      timelineSvg.style.width = `${getBaseWidth() * zoom}px`;
+
+      const newWidth = timelineSvg.offsetWidth;
+      timeline.scrollLeft = (oldCenter / oldWidth) * newWidth - timeline.clientWidth / 2;
+
+      showControls();
+    }
+
+    fullscreenBtn.addEventListener("click", async () => {
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+          fullscreenBtn.textContent = "Exit Full Screen";
+        } else {
+          await document.exitFullscreen();
+          fullscreenBtn.textContent = "Full Screen";
+        }
+      } catch (error) {
+        console.warn("Fullscreen is not available on this device.", error);
+      }
+
+      showControls();
+    });
+
+    document.addEventListener("fullscreenchange", () => {
+      fullscreenBtn.textContent = document.fullscreenElement ? "Exit Full Screen" : "Full Screen";
+      showControls();
+    });
+
+    zoomInBtn.addEventListener("click", () => setZoom(zoom + 0.15));
+    zoomOutBtn.addEventListener("click", () => setZoom(zoom - 0.15));
+
+    ["scroll", "wheel", "touchmove", "pointermove", "keydown"].forEach((eventName) => {
+      document.addEventListener(eventName, showControls, { passive: true });
+    });
+
+    window.addEventListener("resize", () => {
+      setZoom(zoom);
+      showControls();
+    });
+
+    if (window.visualViewport) {
+      visualViewport.addEventListener("resize", showControls);
+      visualViewport.addEventListener("scroll", showControls);
+    }
 
     setInterval(() => {
       const maxScroll = timeline.scrollWidth - timeline.clientWidth;
@@ -64,6 +172,8 @@
       if (timeline.scrollLeft >= maxScroll) direction = -1;
       if (timeline.scrollLeft <= 0) direction = 1;
     }, 2000);
+
+    showControls();
   </script>
 </body>
 </html>
