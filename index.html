@@ -241,11 +241,11 @@
 
         if (maxScroll <= 0) return;
 
-        timeline.scrollLeft += direction * 1.25;
+        timeline.scrollLeft += direction * 1;
 
         if (timeline.scrollLeft >= maxScroll) direction = -1;
         if (timeline.scrollLeft <= 0) direction = 1;
-      }, 20);
+      }, 50);
     }
 
     function stopAutoScroll() {
