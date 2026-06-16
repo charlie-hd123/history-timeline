@@ -16,7 +16,8 @@
       overflow: hidden;
       background: #e8e8e8;
       font-family: Arial, sans-serif;
-      touch-action: none;
+      touch-action: pan-x pan-y;
+      -webkit-tap-highlight-color: transparent;
     }
 
     /* Fixed buttons */
@@ -77,8 +78,17 @@
       font-size: 15px;
       line-height: 1.15;
       cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
       white-space: nowrap;
       min-width: 50px;
+    }
+
+    button:focus,
+    button:focus-visible {
+      outline: none;
     }
 
     #controls button {
@@ -137,7 +147,7 @@
       background: #e8e8e8;
       overscroll-behavior: none;
       scrollbar-width: none;
-      touch-action: none;
+      touch-action: pan-x pan-y;
     }
 
     #timeline::-webkit-scrollbar {
@@ -149,7 +159,7 @@
       width: 7600px;
       height: auto;
       display: block;
-      touch-action: none;
+      touch-action: pan-x pan-y;
     }
 
     /* Tablet timeline size */
@@ -229,17 +239,6 @@
     let autoScrollTimer;
     let autoScrolling = false;
     let svgAspectRatio = null;
-    let pinchStartDistance = null;
-    let pinchStartZoom = 1;
-    let pinchAnchorXRatio = 0.5;
-    let pinchAnchorYRatio = 0.5;
-    let pinchMidpointX = 0;
-    let pinchMidpointY = 0;
-    let panPointerId = null;
-    let panLastX = 0;
-    let panLastY = 0;
-    let panHasMoved = false;
-    const activePointers = new Map();
     const interactionEvents = [
       "click",
       "mousedown",
@@ -307,8 +306,6 @@
 
         if (svgDocument) addInteractionListeners(svgDocument);
         if (svgWindow) addInteractionListeners(svgWindow);
-        if (svgDocument) addPinchZoomListeners(svgDocument);
-        if (svgWindow) addPinchZoomListeners(svgWindow);
       } catch (error) {
         console.warn("Could not attach timeline interaction listeners.", error);
       }
@@ -331,191 +328,6 @@
 
         showControls();
       });
-    }
-
-    function getTouchDistance(touches) {
-      const deltaX = touches[0].clientX - touches[1].clientX;
-      const deltaY = touches[0].clientY - touches[1].clientY;
-
-      return Math.hypot(deltaX, deltaY);
-    }
-
-    function getTouchMidpoint(touches) {
-      return {
-        x: (touches[0].clientX + touches[1].clientX) / 2,
-        y: (touches[0].clientY + touches[1].clientY) / 2
-      };
-    }
-
-    function getPointDistance(points) {
-      const deltaX = points[0].clientX - points[1].clientX;
-      const deltaY = points[0].clientY - points[1].clientY;
-
-      return Math.hypot(deltaX, deltaY);
-    }
-
-    function getPointMidpoint(points) {
-      return {
-        x: (points[0].clientX + points[1].clientX) / 2,
-        y: (points[0].clientY + points[1].clientY) / 2
-      };
-    }
-
-    function setZoomAtViewportPoint(nextZoom, viewportX, viewportY, anchorXRatio, anchorYRatio) {
-      applyZoom(nextZoom);
-
-      const newRect = timelineSvg.getBoundingClientRect();
-      timeline.scrollLeft = anchorXRatio * newRect.width - viewportX;
-      timeline.scrollTop = anchorYRatio * newRect.height - viewportY;
-    }
-
-    function startPinchZoom(event) {
-      if (event.touches.length !== 2) return;
-
-      event.preventDefault();
-      stopAutoScroll();
-
-      const rect = timelineSvg.getBoundingClientRect();
-      const midpoint = getTouchMidpoint(event.touches);
-
-      pinchStartDistance = getTouchDistance(event.touches);
-      pinchStartZoom = zoom;
-      pinchMidpointX = midpoint.x;
-      pinchMidpointY = midpoint.y;
-      pinchAnchorXRatio = rect.width ? (timeline.scrollLeft + midpoint.x) / rect.width : 0.5;
-      pinchAnchorYRatio = rect.height ? (timeline.scrollTop + midpoint.y) / rect.height : 0.5;
-
-      showControls();
-    }
-
-    function movePinchZoom(event) {
-      if (event.touches.length !== 2 || !pinchStartDistance) return;
-
-      event.preventDefault();
-
-      const nextDistance = getTouchDistance(event.touches);
-      const nextZoom = pinchStartZoom * (nextDistance / pinchStartDistance);
-
-      setZoomAtViewportPoint(
-        nextZoom,
-        pinchMidpointX,
-        pinchMidpointY,
-        pinchAnchorXRatio,
-        pinchAnchorYRatio
-      );
-
-      showControls();
-    }
-
-    function endPinchZoom(event) {
-      if (event.touches.length >= 2) return;
-
-      pinchStartDistance = null;
-    }
-
-    function addPinchZoomListeners(target) {
-      if (window.PointerEvent) {
-        target.addEventListener("pointerdown", startPointerPinchZoom, { passive: false });
-        target.addEventListener("pointermove", movePointerPinchZoom, { passive: false });
-        target.addEventListener("pointerup", endPointerPinchZoom, { passive: true });
-        target.addEventListener("pointercancel", endPointerPinchZoom, { passive: true });
-      } else {
-        target.addEventListener("touchstart", startPinchZoom, { passive: false });
-        target.addEventListener("touchmove", movePinchZoom, { passive: false });
-        target.addEventListener("touchend", endPinchZoom, { passive: true });
-        target.addEventListener("touchcancel", endPinchZoom, { passive: true });
-      }
-    }
-
-    function startPointerPinchZoom(event) {
-      if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
-
-      activePointers.set(event.pointerId, {
-        clientX: event.clientX,
-        clientY: event.clientY
-      });
-
-      if (activePointers.size === 1) {
-        panPointerId = event.pointerId;
-        panLastX = event.clientX;
-        panLastY = event.clientY;
-        panHasMoved = false;
-      }
-
-      if (activePointers.size !== 2) return;
-
-      event.preventDefault();
-      stopAutoScroll();
-
-      const points = Array.from(activePointers.values());
-      const rect = timelineSvg.getBoundingClientRect();
-      const midpoint = getPointMidpoint(points);
-
-      pinchStartDistance = getPointDistance(points);
-      pinchStartZoom = zoom;
-      pinchMidpointX = midpoint.x;
-      pinchMidpointY = midpoint.y;
-      pinchAnchorXRatio = rect.width ? (timeline.scrollLeft + midpoint.x) / rect.width : 0.5;
-      pinchAnchorYRatio = rect.height ? (timeline.scrollTop + midpoint.y) / rect.height : 0.5;
-
-      showControls();
-    }
-
-    function movePointerPinchZoom(event) {
-      if (!activePointers.has(event.pointerId)) return;
-
-      activePointers.set(event.pointerId, {
-        clientX: event.clientX,
-        clientY: event.clientY
-      });
-
-      if (activePointers.size === 1 && event.pointerId === panPointerId) {
-        const deltaX = event.clientX - panLastX;
-        const deltaY = event.clientY - panLastY;
-
-        if (Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1) {
-          panHasMoved = true;
-          event.preventDefault();
-          timeline.scrollLeft -= deltaX;
-          timeline.scrollTop -= deltaY;
-          panLastX = event.clientX;
-          panLastY = event.clientY;
-          showControls();
-        }
-
-        return;
-      }
-
-      if (activePointers.size !== 2 || !pinchStartDistance) return;
-
-      event.preventDefault();
-
-      const points = Array.from(activePointers.values());
-      const nextDistance = getPointDistance(points);
-      const nextZoom = pinchStartZoom * (nextDistance / pinchStartDistance);
-
-      setZoomAtViewportPoint(
-        nextZoom,
-        pinchMidpointX,
-        pinchMidpointY,
-        pinchAnchorXRatio,
-        pinchAnchorYRatio
-      );
-
-      showControls();
-    }
-
-    function endPointerPinchZoom(event) {
-      activePointers.delete(event.pointerId);
-
-      if (activePointers.size < 2) {
-        pinchStartDistance = null;
-      }
-
-      if (event.pointerId === panPointerId) {
-        panPointerId = null;
-        panHasMoved = false;
-      }
     }
 
     function setTimelineView(horizontalRatio, verticalRatio) {
@@ -547,6 +359,11 @@
         event.preventDefault();
         setZoom(1);
       }
+    }
+
+    function releaseButtonFocus(event) {
+      const button = event.currentTarget;
+      setTimeout(() => button.blur(), 0);
     }
 
     async function startTabletDisplayMode() {
@@ -662,9 +479,22 @@
     addInteractionListeners(timeline);
     addInteractionListeners(timelineSvg);
     addInteractionListeners(wakeLayer);
-    addPinchZoomListeners(timeline);
-    addPinchZoomListeners(timelineSvg);
-    addPinchZoomListeners(wakeLayer);
+    [
+      fullscreenBtn,
+      autoScrollBtn,
+      tabletDisplayBtn,
+      zoomInBtn,
+      zoomOutBtn,
+      resetZoomBtn,
+      leftBtn,
+      rightBtn,
+      upBtn,
+      downBtn
+    ].forEach((button) => {
+      button.addEventListener("click", releaseButtonFocus);
+      button.addEventListener("touchend", releaseButtonFocus, { passive: true });
+      button.addEventListener("pointerup", releaseButtonFocus, { passive: true });
+    });
     document.addEventListener("keydown", handleBrowserZoomShortcut);
     timelineSvg.addEventListener("load", addSvgInteractionListeners);
 
