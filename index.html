@@ -293,8 +293,7 @@
       const centerXRatio = oldRect.width ? oldCenterX / oldRect.width : 0.5;
       const centerYRatio = oldRect.height ? (oldCenterY - oldSvgTop) / oldRect.height : 0.5;
 
-      zoom = Math.min(Math.max(nextZoom, 0.25), 6);
-      updateTimelineSize();
+      applyZoom(nextZoom);
 
       requestAnimationFrame(() => {
         const newRect = timelineSvg.getBoundingClientRect();
@@ -321,6 +320,11 @@
       });
     }
 
+    function applyZoom(nextZoom) {
+      zoom = Math.min(Math.max(nextZoom, 0.25), 6);
+      updateTimelineSize();
+    }
+
     async function startTabletDisplayMode() {
       showControls();
 
@@ -332,8 +336,11 @@
         console.warn("Fullscreen is not available on this device.", error);
       }
 
-      zoom = Math.min(Math.max(tabletDisplaySettings.zoom, 0.25), 6);
-      updateTimelineSize();
+      stopAutoScroll();
+      timeline.scrollLeft = 0;
+      window.scrollTo({ left: 0, top: 0 });
+      applyZoom(1);
+      applyZoom(tabletDisplaySettings.zoom);
 
       requestAnimationFrame(() => {
         setTimelineView(tabletDisplaySettings.horizontalRatio, tabletDisplaySettings.verticalRatio);
