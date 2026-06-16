@@ -183,6 +183,48 @@
         width: 16000px;
       }
     }
+
+    @media (max-width: 799px) {
+      #controls {
+        top: 8px;
+        left: 8px;
+        right: 72px;
+        gap: 4px;
+      }
+
+      #topControls,
+      #scrollControls {
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      button {
+        border-radius: 5px;
+        font-size: 12px;
+        padding: 7px 9px;
+        min-width: 36px;
+      }
+
+      #controls button {
+        min-height: 34px;
+        min-width: 38px;
+      }
+
+      #dpad {
+        top: auto;
+        right: 8px;
+        bottom: 8px;
+        grid-template-columns: repeat(3, 34px);
+        grid-template-rows: repeat(3, 34px);
+        gap: 4px;
+      }
+
+      #dpad button {
+        min-width: 34px;
+        padding: 5px;
+        font-size: 13px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -238,6 +280,10 @@
     const upBtn = document.getElementById("upBtn");
     const downBtn = document.getElementById("downBtn");
     const timelineSvgPath = "assets/timeline.svg";
+    const defaultZoom = 1.25;
+    const defaultVerticalRatio = 0.5;
+    const zoomStep = 0.15;
+    const arrowStep = 120;
     const tabletDisplaySettings = {
       zoom: 1.6,
       horizontalRatio: 0,
@@ -245,11 +291,12 @@
     };
 
     let direction = 1;
-    let zoom = 1;
+    let zoom = defaultZoom;
     let hideControlsTimer;
     let autoScrollTimer;
     let autoScrolling = false;
     let svgAspectRatio = null;
+    let initialViewApplied = false;
     const interactionEvents = [
       "click",
       "mousedown",
@@ -286,6 +333,7 @@
         if (measurementImage.naturalWidth > 0 && measurementImage.naturalHeight > 0) {
           svgAspectRatio = measurementImage.naturalHeight / measurementImage.naturalWidth;
           updateTimelineSize();
+          setDefaultView();
         }
       });
 
@@ -314,6 +362,7 @@
         addInteractionListeners(timelineSvg);
         blockBrowserPinchZoom(timelineSvg);
         updateTimelineSize();
+        setDefaultView();
       } catch (error) {
         console.warn("Inline SVG loading is unavailable; using embedded fallback.", error);
       }
@@ -399,23 +448,32 @@
 
       if (event.key === "+" || event.key === "=") {
         event.preventDefault();
-        setZoom(zoom + 0.4);
+        setZoom(zoom + zoomStep);
       }
 
       if (event.key === "-") {
         event.preventDefault();
-        setZoom(zoom - 0.4);
+        setZoom(zoom - zoomStep);
       }
 
       if (event.key === "0") {
         event.preventDefault();
-        setZoom(1);
+        setZoom(defaultZoom);
       }
     }
 
     function releaseButtonFocus(event) {
       const button = event.currentTarget;
       setTimeout(() => button.blur(), 0);
+    }
+
+    function setDefaultView() {
+      if (initialViewApplied) return;
+
+      requestAnimationFrame(() => {
+        setTimelineView(0, defaultVerticalRatio);
+        initialViewApplied = true;
+      });
     }
 
     async function startTabletDisplayMode() {
@@ -432,7 +490,7 @@
       stopAutoScroll();
       timeline.scrollLeft = 0;
       timeline.scrollTop = 0;
-      applyZoom(1);
+      applyZoom(defaultZoom);
       applyZoom(tabletDisplaySettings.zoom);
 
       requestAnimationFrame(() => {
@@ -502,27 +560,27 @@
 
     tabletDisplayBtn.addEventListener("click", startTabletDisplayMode);
 
-    zoomInBtn.addEventListener("click", () => setZoom(zoom + 0.4));
-    zoomOutBtn.addEventListener("click", () => setZoom(zoom - 0.4));
-    resetZoomBtn.addEventListener("click", () => setZoom(1));
+    zoomInBtn.addEventListener("click", () => setZoom(zoom + zoomStep));
+    zoomOutBtn.addEventListener("click", () => setZoom(zoom - zoomStep));
+    resetZoomBtn.addEventListener("click", () => setZoom(defaultZoom));
 
     leftBtn.addEventListener("click", () => {
-      timeline.scrollBy({ left: -400, behavior: "smooth" });
+      timeline.scrollBy({ left: -arrowStep, behavior: "smooth" });
       showControls();
     });
 
     rightBtn.addEventListener("click", () => {
-      timeline.scrollBy({ left: 400, behavior: "smooth" });
+      timeline.scrollBy({ left: arrowStep, behavior: "smooth" });
       showControls();
     });
 
     upBtn.addEventListener("click", () => {
-      timeline.scrollBy({ top: -60, behavior: "smooth" });
+      timeline.scrollBy({ top: -arrowStep, behavior: "smooth" });
       showControls();
     });
 
     downBtn.addEventListener("click", () => {
-      timeline.scrollBy({ top: 60, behavior: "smooth" });
+      timeline.scrollBy({ top: arrowStep, behavior: "smooth" });
       showControls();
     });
 
