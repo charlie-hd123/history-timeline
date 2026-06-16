@@ -162,6 +162,14 @@
       touch-action: pan-x pan-y;
     }
 
+    #timelineSvg > svg,
+    #timelineSvgFallback {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: pan-x pan-y;
+    }
+
     /* Tablet timeline size */
     @media (min-width: 800px) {
       #timelineSvg {
@@ -206,13 +214,16 @@
 
   <!-- Timeline SVG -->
   <div id="timeline">
-    <object id="timelineSvg" data="assets/timeline.svg" type="image/svg+xml" aria-label="History timeline"></object>
+    <div id="timelineSvg" role="img" aria-label="History timeline">
+      <object id="timelineSvgFallback" data="assets/timeline.svg" type="image/svg+xml" aria-label="History timeline"></object>
+    </div>
   </div>
 
   <script>
     // Auto-scrolls the timeline slowly left and right
     const timeline = document.getElementById("timeline");
     const timelineSvg = document.getElementById("timelineSvg");
+    const timelineSvgFallback = document.getElementById("timelineSvgFallback");
     const controls = document.getElementById("controls");
     const dpad = document.getElementById("dpad");
     const wakeLayer = document.getElementById("wakeLayer");
@@ -281,6 +292,45 @@
       measurementImage.src = timelineSvgPath;
     }
 
+    async function loadInlineTimelineSvg() {
+      try {
+        const response = await fetch(timelineSvgPath);
+        if (!response.ok) return;
+
+        const svgText = await response.text();
+        const svgDocument = new DOMParser().parseFromString(svgText, "image/svg+xml");
+        const svgElement = svgDocument.documentElement;
+
+        if (svgElement.tagName.toLowerCase() !== "svg") return;
+
+        svgElement.removeAttribute("width");
+        svgElement.removeAttribute("height");
+        svgElement.setAttribute("focusable", "false");
+        svgElement.style.width = "100%";
+        svgElement.style.height = "100%";
+        svgElement.style.display = "block";
+
+        timelineSvg.replaceChildren(document.importNode(svgElement, true));
+        addInteractionListeners(timelineSvg);
+        blockBrowserPinchZoom(timelineSvg);
+        updateTimelineSize();
+      } catch (error) {
+        console.warn("Inline SVG loading is unavailable; using embedded fallback.", error);
+      }
+    }
+
+    function stopBrowserPinchZoom(event) {
+      if (event.touches && event.touches.length > 1) {
+        event.preventDefault();
+      }
+    }
+
+    function blockBrowserPinchZoom(target) {
+      target.addEventListener("touchmove", stopBrowserPinchZoom, { passive: false });
+      target.addEventListener("gesturestart", (event) => event.preventDefault(), { passive: false });
+      target.addEventListener("gesturechange", (event) => event.preventDefault(), { passive: false });
+    }
+
     function showControls() {
       controls.classList.remove("hidden");
       dpad.classList.remove("hidden");
@@ -301,11 +351,13 @@
 
     function addSvgInteractionListeners() {
       try {
-        const svgDocument = timelineSvg.contentDocument || timelineSvg.getSVGDocument?.();
+        const svgDocument = timelineSvgFallback.contentDocument || timelineSvgFallback.getSVGDocument?.();
         const svgWindow = svgDocument?.defaultView;
 
         if (svgDocument) addInteractionListeners(svgDocument);
         if (svgWindow) addInteractionListeners(svgWindow);
+        if (svgDocument) blockBrowserPinchZoom(svgDocument);
+        if (svgWindow) blockBrowserPinchZoom(svgWindow);
       } catch (error) {
         console.warn("Could not attach timeline interaction listeners.", error);
       }
@@ -479,6 +531,10 @@
     addInteractionListeners(timeline);
     addInteractionListeners(timelineSvg);
     addInteractionListeners(wakeLayer);
+    blockBrowserPinchZoom(document);
+    blockBrowserPinchZoom(timeline);
+    blockBrowserPinchZoom(timelineSvg);
+    blockBrowserPinchZoom(wakeLayer);
     [
       fullscreenBtn,
       autoScrollBtn,
@@ -496,7 +552,7 @@
       button.addEventListener("pointerup", releaseButtonFocus, { passive: true });
     });
     document.addEventListener("keydown", handleBrowserZoomShortcut);
-    timelineSvg.addEventListener("load", addSvgInteractionListeners);
+    timelineSvgFallback.addEventListener("load", addSvgInteractionListeners);
 
     window.addEventListener("resize", () => {
       setZoom(zoom);
@@ -510,6 +566,7 @@
 
     updateTimelineSize();
     measureTimelineSvg();
+    loadInlineTimelineSvg();
     showControls();
   </script>
 </body>
