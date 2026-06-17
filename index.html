@@ -769,6 +769,51 @@
       setTimeout(() => button.blur(), 0);
     }
 
+    function addButtonAction(button, action) {
+      let handledPointerAction = false;
+
+      button.addEventListener("pointerup", (event) => {
+        if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
+
+        handledPointerAction = true;
+        event.preventDefault();
+        action(event);
+        releaseButtonFocus(event);
+      });
+
+      button.addEventListener("click", (event) => {
+        if (handledPointerAction) {
+          handledPointerAction = false;
+          event.preventDefault();
+          return;
+        }
+
+        action(event);
+        releaseButtonFocus(event);
+      });
+    }
+
+    function refreshAfterViewportChange() {
+      const previousScrollLeft = timeline.scrollLeft;
+      const previousScrollTop = timeline.scrollTop;
+
+      updateTimelineSize();
+      updateProgressLayout();
+      requestTimelineProgressUpdate();
+      timeline.scrollLeft = previousScrollLeft;
+      timeline.scrollTop = previousScrollTop;
+      showControls();
+
+      setTimeout(() => {
+        updateTimelineSize();
+        updateProgressLayout();
+        requestTimelineProgressUpdate();
+        timeline.scrollLeft = previousScrollLeft;
+        timeline.scrollTop = previousScrollTop;
+        showControls();
+      }, 350);
+    }
+
     function setDefaultView() {
       if (initialViewApplied) return;
 
@@ -823,7 +868,7 @@
       });
     }
 
-    fullscreenBtn.addEventListener("click", async () => {
+    addButtonAction(fullscreenBtn, async () => {
       if (isHandheldAppleDevice() && !document.fullscreenElement) {
         showFullscreenNotice();
       }
@@ -882,7 +927,7 @@
       clearInterval(autoScrollTimer);
     }
 
-    autoScrollBtn.addEventListener("click", () => {
+    addButtonAction(autoScrollBtn, () => {
       if (autoScrolling) {
         stopAutoScroll();
       } else {
@@ -892,11 +937,11 @@
       showControls();
     });
 
-    tabletDisplayBtn.addEventListener("click", startTabletDisplayMode);
+    addButtonAction(tabletDisplayBtn, startTabletDisplayMode);
 
-    zoomInBtn.addEventListener("click", () => setZoom(zoom + zoomStep));
-    zoomOutBtn.addEventListener("click", () => setZoom(zoom - zoomStep));
-    resetViewBtn.addEventListener("click", resetView);
+    addButtonAction(zoomInBtn, () => setZoom(zoom + zoomStep));
+    addButtonAction(zoomOutBtn, () => setZoom(zoom - zoomStep));
+    addButtonAction(resetViewBtn, resetView);
 
     timeline.addEventListener("scroll", requestTimelineProgressUpdate, { passive: true });
     timelineProgressTrack.addEventListener("click", seekTimelineFromProgress);
@@ -922,7 +967,6 @@
       zoomOutBtn,
       resetViewBtn
     ].forEach((button) => {
-      button.addEventListener("click", releaseButtonFocus);
       button.addEventListener("touchend", releaseButtonFocus, { passive: true });
       button.addEventListener("pointerup", releaseButtonFocus, { passive: true });
     });
@@ -932,16 +976,13 @@
 
     window.addEventListener("resize", () => {
       setZoom(zoom);
-      updateProgressLayout();
-      requestTimelineProgressUpdate();
-      showControls();
+      refreshAfterViewportChange();
     });
 
+    window.addEventListener("orientationchange", refreshAfterViewportChange);
+
     if (window.visualViewport) {
-      visualViewport.addEventListener("resize", () => {
-        updateProgressLayout();
-        showControls();
-      });
+      visualViewport.addEventListener("resize", refreshAfterViewportChange);
     }
 
     updateTimelineSize();
