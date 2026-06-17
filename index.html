@@ -133,6 +133,10 @@
       min-width: 52px;
     }
 
+    #tabletDisplayBtn {
+      display: none;
+    }
+
     #dpad button {
       padding: 6px;
       font-size: 17px;
@@ -204,6 +208,12 @@
     @media (min-width: 800px) {
       #timelineSvg {
         width: 13000px;
+      }
+    }
+
+    @media (min-width: 800px) and (pointer: coarse) {
+      #tabletDisplayBtn {
+        display: inline-block;
       }
     }
 
