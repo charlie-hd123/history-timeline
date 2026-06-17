@@ -106,8 +106,10 @@
       position: fixed;
       top: 72px;
       left: 10px;
+      right: 10px;
       z-index: 20;
-      max-width: min(420px, calc(100vw - 20px));
+      box-sizing: border-box;
+      max-width: 420px;
       padding: 12px 14px;
       border: 1px solid rgba(255, 255, 255, 0.35);
       border-radius: 8px;
@@ -121,6 +123,12 @@
       transform: translateY(-4px);
       transition: opacity 0.25s ease, transform 0.25s ease;
       backdrop-filter: blur(8px);
+    }
+
+    @media (min-width: 520px) {
+      #fullscreenNotice {
+        right: auto;
+      }
     }
 
     #fullscreenNotice.visible {
@@ -401,9 +409,10 @@
 
     function showFullscreenNotice() {
       const controlsRect = controls.getBoundingClientRect();
+      const narrowScreen = window.innerWidth < 520;
 
       fullscreenNotice.textContent = "Full screen may be blocked on iPhone and iPad. For the cleanest view, hide the browser toolbar from the menu, or add this page to your Home Screen and open it from there.";
-      fullscreenNotice.style.left = `${Math.max(8, controlsRect.left)}px`;
+      fullscreenNotice.style.left = narrowScreen ? "10px" : `${Math.max(8, controlsRect.left)}px`;
       fullscreenNotice.style.top = `${Math.min(window.innerHeight - 80, controlsRect.bottom + 8)}px`;
       fullscreenNotice.classList.add("visible");
 
