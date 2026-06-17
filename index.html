@@ -343,8 +343,8 @@
       }
 
       #timelineProgress {
-        bottom: 66px;
-        width: calc(100vw - 24px);
+        bottom: 118px;
+        width: min(360px, calc(100vw - 116px));
         min-width: 0;
         padding: 8px 9px;
       }
@@ -381,6 +381,22 @@
         min-width: 42px;
         min-height: 42px;
         font-size: 20px;
+      }
+    }
+
+    @media (max-width: 799px) and (orientation: landscape) {
+      #timelineProgress {
+        bottom: 70px;
+        width: min(340px, 42vw);
+      }
+    }
+
+    @media (max-height: 500px) and (max-width: 950px) {
+      #timelineProgress {
+        bottom: 70px;
+        width: min(340px, 42vw);
+        min-width: 0;
+        padding: 8px 9px;
       }
     }
   </style>
