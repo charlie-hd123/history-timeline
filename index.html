@@ -48,7 +48,7 @@
     #zoomControls {
       position: fixed;
       right: 18px;
-      bottom: 18px;
+      top: 18px;
       z-index: 10;
       display: flex;
       gap: 8px;
@@ -64,30 +64,6 @@
 
     #controls.hidden,
     #zoomControls.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    #dpad {
-      position: fixed;
-      left: 18px;
-      bottom: 18px;
-      z-index: 10;
-      display: grid;
-      grid-template-columns: repeat(3, 39px);
-      grid-template-rows: repeat(3, 39px);
-      gap: 4px;
-      padding: 5px;
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      border-radius: 8px;
-      background: rgba(96, 96, 96, 0.72);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
-      opacity: 1;
-      transition: opacity 0.4s ease;
-      backdrop-filter: blur(8px);
-    }
-
-    #dpad.hidden {
       opacity: 0;
       pointer-events: none;
     }
@@ -236,36 +212,6 @@
       display: none;
     }
 
-    #dpad button {
-      position: relative;
-      width: 39px;
-      height: 39px;
-      box-sizing: border-box;
-      padding: 6px;
-      font-size: 24px;
-      line-height: 1;
-      min-width: 39px;
-      min-height: 39px;
-    }
-
-    .arrowIcon {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      display: block;
-      width: 26px;
-      height: 26px;
-      transform: translate(-50%, -50%);
-    }
-
-    .arrowIcon path {
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 2.4;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
     #zoomControls button {
       display: flex;
       align-items: center;
@@ -280,26 +226,6 @@
     #zoomControls #zoomOutBtn {
       font-size: 38px;
       padding-bottom: 4px;
-    }
-
-    #upBtn {
-      grid-column: 2;
-      grid-row: 1;
-    }
-
-    #leftBtn {
-      grid-column: 1;
-      grid-row: 2;
-    }
-
-    #rightBtn {
-      grid-column: 3;
-      grid-row: 2;
-    }
-
-    #downBtn {
-      grid-column: 2;
-      grid-row: 3;
     }
 
     /* Timeline viewing area */
@@ -371,14 +297,14 @@
 
       #zoomControls {
         right: 10px;
-        bottom: max(10px, env(safe-area-inset-bottom));
+        top: max(10px, env(safe-area-inset-top));
         padding: 4px;
         gap: 5px;
       }
 
       #timelineProgress {
-        bottom: var(--progress-bottom, calc(max(10px, env(safe-area-inset-bottom)) + 118px));
-        width: var(--progress-width, min(300px, calc(100vw - 96px)));
+        bottom: max(10px, env(safe-area-inset-bottom));
+        width: min(340px, calc(100vw - 24px));
         min-width: 0;
         padding: 6px 8px;
         border-radius: 7px;
@@ -396,28 +322,6 @@
         min-width: 32px;
       }
 
-      #dpad {
-        left: 10px;
-        bottom: max(10px, env(safe-area-inset-bottom));
-        grid-template-columns: repeat(3, 27px);
-        grid-template-rows: repeat(3, 27px);
-        padding: 4px;
-        gap: 3px;
-      }
-
-      #dpad button {
-        width: 27px;
-        height: 27px;
-        min-width: 27px;
-        min-height: 27px;
-        padding: 3px;
-      }
-
-      .arrowIcon {
-        width: 19px;
-        height: 19px;
-      }
-
       #zoomControls button {
         min-width: 38px;
         min-height: 38px;
@@ -427,13 +331,6 @@
       #zoomControls #zoomOutBtn {
         font-size: 28px;
         padding-bottom: 3px;
-      }
-    }
-
-    @media (max-width: 799px) and (orientation: landscape) {
-      #timelineProgress {
-        bottom: var(--progress-bottom, calc(max(10px, env(safe-area-inset-bottom)) + 52px));
-        width: var(--progress-width, min(280px, 34vw));
       }
     }
 
@@ -448,14 +345,14 @@
 
       #zoomControls {
         right: 10px;
-        bottom: 10px;
+        top: 10px;
         padding: 4px;
         gap: 5px;
       }
 
       #timelineProgress {
-        bottom: var(--progress-bottom, calc(max(10px, env(safe-area-inset-bottom)) + 52px));
-        width: var(--progress-width, min(280px, 34vw));
+        bottom: 10px;
+        width: min(340px, calc(100vw - 24px));
         min-width: 0;
         padding: 6px 8px;
       }
@@ -470,28 +367,6 @@
       #controls button {
         min-height: 28px;
         min-width: 32px;
-      }
-
-      #dpad {
-        left: 10px;
-        bottom: 10px;
-        grid-template-columns: repeat(3, 27px);
-        grid-template-rows: repeat(3, 27px);
-        padding: 4px;
-        gap: 3px;
-      }
-
-      #dpad button {
-        width: 27px;
-        height: 27px;
-        min-width: 27px;
-        min-height: 27px;
-        padding: 3px;
-      }
-
-      .arrowIcon {
-        width: 19px;
-        height: 19px;
       }
 
       #zoomControls button {
@@ -525,30 +400,6 @@
     <button id="zoomInBtn">+</button>
   </div>
 
-  <!-- Movement buttons in a D-pad layout -->
-  <div id="dpad">
-    <button id="upBtn">
-      <svg class="arrowIcon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 19V5M5 12l7-7 7 7"></path>
-      </svg>
-    </button>
-    <button id="leftBtn">
-      <svg class="arrowIcon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M19 12H5M12 5l-7 7 7 7"></path>
-      </svg>
-    </button>
-    <button id="rightBtn">
-      <svg class="arrowIcon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M5 12h14M12 5l7 7-7 7"></path>
-      </svg>
-    </button>
-    <button id="downBtn">
-      <svg class="arrowIcon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 5v14M5 12l7 7 7-7"></path>
-      </svg>
-    </button>
-  </div>
-
   <div id="timelineProgress" aria-label="Timeline position">
     <div id="timelineProgressTrack">
       <div id="timelineProgressFill"></div>
@@ -570,7 +421,6 @@
     const timelineSvgFallback = document.getElementById("timelineSvgFallback");
     const controls = document.getElementById("controls");
     const zoomControls = document.getElementById("zoomControls");
-    const dpad = document.getElementById("dpad");
     const wakeLayer = document.getElementById("wakeLayer");
     const timelineProgress = document.getElementById("timelineProgress");
     const timelineProgressTrack = document.getElementById("timelineProgressTrack");
@@ -583,15 +433,10 @@
     const zoomInBtn = document.getElementById("zoomInBtn");
     const zoomOutBtn = document.getElementById("zoomOutBtn");
     const resetViewBtn = document.getElementById("resetViewBtn");
-    const leftBtn = document.getElementById("leftBtn");
-    const rightBtn = document.getElementById("rightBtn");
-    const upBtn = document.getElementById("upBtn");
-    const downBtn = document.getElementById("downBtn");
     const timelineSvgPath = "assets/timeline.svg";
     const zoomStep = 0.15;
     const desktopDefaultZoom = 1.45;
     const defaultZoom = isTabletDevice() ? desktopDefaultZoom - zoomStep * 3 : desktopDefaultZoom;
-    const arrowStep = 120;
     const tabletDisplaySettings = {
       zoom: 3,
       horizontalRatio: 0,
@@ -724,14 +569,12 @@
       updateProgressLayout();
       controls.classList.remove("hidden");
       zoomControls.classList.remove("hidden");
-      dpad.classList.remove("hidden");
       timelineProgress.classList.remove("hidden");
       wakeLayer.classList.remove("active");
       clearTimeout(hideControlsTimer);
       hideControlsTimer = setTimeout(() => {
         controls.classList.add("hidden");
         zoomControls.classList.add("hidden");
-        dpad.classList.add("hidden");
         timelineProgress.classList.add("hidden");
         wakeLayer.classList.add("active");
       }, 5000);
@@ -775,46 +618,7 @@
     }
 
     function updateProgressLayout() {
-      const phoneLayout = window.matchMedia("(max-width: 799px), (max-height: 500px) and (max-width: 950px)").matches;
-
-      if (!phoneLayout) {
-        resetProgressLayout();
-        return;
-      }
-
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      const gap = 12;
-      const minProgressWidth = 120;
-      const maxProgressWidth = Math.min(300, viewportWidth - gap * 2);
-      const dpadRect = dpad.getBoundingClientRect();
-      const zoomRect = zoomControls.getBoundingClientRect();
-      const progressRect = timelineProgress.getBoundingClientRect();
-      const middleLeft = dpadRect.right + gap;
-      const middleRight = zoomRect.left - gap;
-      const middleWidth = middleRight - middleLeft;
-      const bottomInset = Math.max(10, viewportHeight - Math.max(dpadRect.bottom, zoomRect.bottom));
-
-      if (middleWidth >= minProgressWidth) {
-        const width = Math.min(maxProgressWidth, middleWidth);
-        const left = middleLeft + middleWidth / 2;
-        const controlHeight = Math.max(dpadRect.height, zoomRect.height);
-        const bottom = bottomInset + Math.max(0, (controlHeight - progressRect.height) / 2);
-
-        timelineProgress.style.setProperty("--progress-left", `${left}px`);
-        timelineProgress.style.setProperty("--progress-bottom", `${bottom}px`);
-        timelineProgress.style.setProperty("--progress-width", `${width}px`);
-        timelineProgress.style.setProperty("--progress-shift", "-50%");
-        return;
-      }
-
-      const topOfBottomControls = Math.min(dpadRect.top, zoomRect.top);
-      const bottom = Math.max(gap, viewportHeight - topOfBottomControls + gap);
-
-      timelineProgress.style.setProperty("--progress-left", "50%");
-      timelineProgress.style.setProperty("--progress-bottom", `${bottom}px`);
-      timelineProgress.style.setProperty("--progress-width", `${maxProgressWidth}px`);
-      timelineProgress.style.setProperty("--progress-shift", "-50%");
+      resetProgressLayout();
     }
 
     function setTimelineProgressFromClientX(clientX, behavior = "auto") {
@@ -875,19 +679,14 @@
         ? { bottom: 0 }
         : controls.getBoundingClientRect();
       const zoomRect = zoomControls.classList.contains("hidden")
-        ? { top: timeline.clientHeight }
+        ? { bottom: 0 }
         : zoomControls.getBoundingClientRect();
-      const dpadRect = dpad.classList.contains("hidden")
-        ? { top: timeline.clientHeight }
-        : dpad.getBoundingClientRect();
       const progressRect = timelineProgress.classList.contains("hidden")
         ? { top: timeline.clientHeight }
         : timelineProgress.getBoundingClientRect();
-      const top = Math.max(0, controlsRect.bottom || 0) + padding;
+      const top = Math.max(0, controlsRect.bottom || 0, zoomRect.bottom || 0) + padding;
       const bottomOverlayTop = Math.min(
         timeline.clientHeight,
-        zoomRect.top || timeline.clientHeight,
-        dpadRect.top || timeline.clientHeight,
         progressRect.top || timeline.clientHeight
       );
       const bottom = Math.max(top + 1, bottomOverlayTop - padding);
@@ -1099,26 +898,6 @@
     zoomOutBtn.addEventListener("click", () => setZoom(zoom - zoomStep));
     resetViewBtn.addEventListener("click", resetView);
 
-    leftBtn.addEventListener("click", () => {
-      timeline.scrollBy({ left: -arrowStep, behavior: "smooth" });
-      showControls();
-    });
-
-    rightBtn.addEventListener("click", () => {
-      timeline.scrollBy({ left: arrowStep, behavior: "smooth" });
-      showControls();
-    });
-
-    upBtn.addEventListener("click", () => {
-      timeline.scrollBy({ top: -arrowStep, behavior: "smooth" });
-      showControls();
-    });
-
-    downBtn.addEventListener("click", () => {
-      timeline.scrollBy({ top: arrowStep, behavior: "smooth" });
-      showControls();
-    });
-
     timeline.addEventListener("scroll", requestTimelineProgressUpdate, { passive: true });
     timelineProgressTrack.addEventListener("click", seekTimelineFromProgress);
     timelineProgressTrack.addEventListener("pointerdown", startTimelineProgressDrag);
@@ -1141,11 +920,7 @@
       tabletDisplayBtn,
       zoomInBtn,
       zoomOutBtn,
-      resetViewBtn,
-      leftBtn,
-      rightBtn,
-      upBtn,
-      downBtn
+      resetViewBtn
     ].forEach((button) => {
       button.addEventListener("click", releaseButtonFocus);
       button.addEventListener("touchend", releaseButtonFocus, { passive: true });
