@@ -102,6 +102,32 @@
       display: block;
     }
 
+    #fullscreenNotice {
+      position: fixed;
+      top: 72px;
+      left: 10px;
+      z-index: 20;
+      max-width: min(420px, calc(100vw - 20px));
+      padding: 12px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 8px;
+      background: rgba(40, 40, 40, 0.86);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+      color: white;
+      font-size: 14px;
+      line-height: 1.35;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-4px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      backdrop-filter: blur(8px);
+    }
+
+    #fullscreenNotice.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
     button {
       padding: 10px 14px;
       border: 0;
@@ -278,6 +304,7 @@
 </head>
 <body>
   <div id="wakeLayer" aria-hidden="true"></div>
+  <div id="fullscreenNotice" role="status" aria-live="polite"></div>
 
   <!-- Main controls -->
   <div id="controls">
@@ -317,6 +344,7 @@
     const zoomControls = document.getElementById("zoomControls");
     const dpad = document.getElementById("dpad");
     const wakeLayer = document.getElementById("wakeLayer");
+    const fullscreenNotice = document.getElementById("fullscreenNotice");
     const fullscreenBtn = document.getElementById("fullscreenBtn");
     const autoScrollBtn = document.getElementById("autoScrollBtn");
     const tabletDisplayBtn = document.getElementById("tabletDisplayBtn");
@@ -342,6 +370,7 @@
     let zoom = defaultZoom;
     let hideControlsTimer;
     let autoScrollTimer;
+    let fullscreenNoticeTimer;
     let autoScrolling = false;
     let svgAspectRatio = null;
     let initialViewApplied = false;
@@ -359,6 +388,29 @@
 
     function isTabletDevice() {
       return window.matchMedia("(min-width: 800px) and (pointer: coarse)").matches;
+    }
+
+    function isHandheldAppleDevice() {
+      const platform = navigator.platform || "";
+      const userAgent = navigator.userAgent || "";
+      const isiPhoneOrIPad = /iPhone|iPad|iPod/.test(userAgent);
+      const isIPadOS = platform === "MacIntel" && navigator.maxTouchPoints > 1;
+
+      return isiPhoneOrIPad || isIPadOS;
+    }
+
+    function showFullscreenNotice() {
+      const controlsRect = controls.getBoundingClientRect();
+
+      fullscreenNotice.textContent = "Full screen may be blocked on iPhone and iPad. For the cleanest view, hide the browser toolbar from the menu, or add this page to your Home Screen and open it from there.";
+      fullscreenNotice.style.left = `${Math.max(8, controlsRect.left)}px`;
+      fullscreenNotice.style.top = `${Math.min(window.innerHeight - 80, controlsRect.bottom + 8)}px`;
+      fullscreenNotice.classList.add("visible");
+
+      clearTimeout(fullscreenNoticeTimer);
+      fullscreenNoticeTimer = setTimeout(() => {
+        fullscreenNotice.classList.remove("visible");
+      }, 8500);
     }
 
     function getBaseWidth() {
@@ -596,6 +648,10 @@
     }
 
     fullscreenBtn.addEventListener("click", async () => {
+      if (isHandheldAppleDevice() && !document.fullscreenElement) {
+        showFullscreenNotice();
+      }
+
       try {
         if (!document.fullscreenElement) {
           await document.documentElement.requestFullscreen();
@@ -606,6 +662,10 @@
         }
       } catch (error) {
         console.warn("Fullscreen is not available on this device.", error);
+
+        if (isHandheldAppleDevice()) {
+          showFullscreenNotice();
+        }
       }
 
       showControls();
