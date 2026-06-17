@@ -171,6 +171,10 @@
       display: none;
     }
 
+    #tabletDisplayBtn[hidden] {
+      display: none;
+    }
+
     #dpad button {
       padding: 6px;
       font-size: 17px;
@@ -249,6 +253,10 @@
     @media (min-width: 800px) and (pointer: coarse) {
       #tabletDisplayBtn {
         display: inline-block;
+      }
+
+      #tabletDisplayBtn[hidden] {
+        display: none;
       }
     }
 
@@ -372,8 +380,8 @@
     const tabletDisplaySettings = {
       zoom: 3,
       horizontalRatio: 0,
-      verticalRatio: 0.63,
-      topOffset: 110
+      verticalRatio: 0.72,
+      topOffset: 0
     };
 
     let direction = 1;
@@ -590,6 +598,10 @@
       tabletDisplayBtn.hidden = active;
     }
 
+    function applyTabletDisplayView() {
+      setTimelineView(tabletDisplaySettings.horizontalRatio, tabletDisplaySettings.verticalRatio);
+    }
+
     function applyZoom(nextZoom) {
       zoom = Math.min(Math.max(nextZoom, 0.25), 6);
       updateTimelineSize();
@@ -662,8 +674,10 @@
 
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          setTimelineView(tabletDisplaySettings.horizontalRatio, tabletDisplaySettings.verticalRatio);
+          applyTabletDisplayView();
         });
+
+        setTimeout(applyTabletDisplayView, 250);
 
         if (!autoScrolling) {
           direction = 1;
