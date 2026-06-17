@@ -23,16 +23,25 @@
     /* Fixed buttons */
     #controls {
       position: fixed;
-      top: 10px;
-      left: 10px;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
       z-index: 10;
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
-      align-items: flex-start;
-      gap: 6px;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      max-width: calc(100vw - 24px);
+      padding: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 8px;
+      background: rgba(96, 96, 96, 0.72);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
       opacity: 1;
       transition: opacity 0.4s ease;
+      backdrop-filter: blur(8px);
     }
 
     #zoomControls {
@@ -41,9 +50,15 @@
       bottom: 10px;
       z-index: 10;
       display: flex;
-      gap: 6px;
+      gap: 4px;
+      padding: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 8px;
+      background: rgba(96, 96, 96, 0.72);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
       opacity: 1;
       transition: opacity 0.4s ease;
+      backdrop-filter: blur(8px);
     }
 
     #controls.hidden,
@@ -58,11 +73,17 @@
       bottom: 10px;
       z-index: 10;
       display: grid;
-      grid-template-columns: repeat(3, 42px);
-      grid-template-rows: repeat(3, 42px);
-      gap: 5px;
+      grid-template-columns: repeat(3, 36px);
+      grid-template-rows: repeat(3, 36px);
+      gap: 4px;
+      padding: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 8px;
+      background: rgba(96, 96, 96, 0.72);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
       opacity: 1;
       transition: opacity 0.4s ease;
+      backdrop-filter: blur(8px);
     }
 
     #dpad.hidden {
@@ -83,12 +104,12 @@
     }
 
     button {
-      padding: 10px 14px;
+      padding: 7px 10px;
       border: 0;
-      border-radius: 6px;
-      background: rgba(120, 120, 120, 0.82);
+      border-radius: 5px;
+      background: transparent;
       color: white;
-      font-size: 15px;
+      font-size: 13px;
       line-height: 1.15;
       cursor: pointer;
       user-select: none;
@@ -96,7 +117,11 @@
       -webkit-touch-callout: none;
       touch-action: manipulation;
       white-space: nowrap;
-      min-width: 50px;
+      min-width: 34px;
+    }
+
+    button:active {
+      background: rgba(255, 255, 255, 0.16);
     }
 
     button:focus,
@@ -105,14 +130,22 @@
     }
 
     #controls button {
-      min-height: 44px;
-      min-width: 58px;
+      min-height: 34px;
+      min-width: 42px;
     }
 
     #dpad button {
-      padding: 8px;
-      font-size: 16px;
-      min-width: 42px;
+      padding: 4px;
+      font-size: 15px;
+      min-width: 36px;
+      min-height: 36px;
+    }
+
+    #zoomControls button {
+      min-width: 38px;
+      min-height: 38px;
+      padding: 4px;
+      font-size: 17px;
     }
 
     #upBtn {
@@ -185,41 +218,50 @@
     @media (max-width: 799px) {
       #controls {
         top: 8px;
-        left: 8px;
-        right: 8px;
-        gap: 4px;
+        max-width: calc(100vw - 16px);
+        padding: 4px;
+        gap: 3px;
       }
 
       #zoomControls {
         left: 8px;
         bottom: 8px;
-        gap: 4px;
+        padding: 4px;
+        gap: 3px;
       }
 
       button {
         border-radius: 5px;
-        font-size: 12px;
-        padding: 7px 9px;
-        min-width: 36px;
+        font-size: 11px;
+        padding: 6px 8px;
+        min-width: 30px;
       }
 
       #controls button {
-        min-height: 34px;
-        min-width: 38px;
+        min-height: 30px;
+        min-width: 34px;
       }
 
       #dpad {
         right: 8px;
         bottom: 8px;
-        grid-template-columns: repeat(3, 34px);
-        grid-template-rows: repeat(3, 34px);
-        gap: 4px;
+        grid-template-columns: repeat(3, 30px);
+        grid-template-rows: repeat(3, 30px);
+        padding: 4px;
+        gap: 3px;
       }
 
       #dpad button {
-        min-width: 34px;
-        padding: 5px;
-        font-size: 13px;
+        min-width: 30px;
+        min-height: 30px;
+        padding: 3px;
+        font-size: 12px;
+      }
+
+      #zoomControls button {
+        min-width: 32px;
+        min-height: 32px;
+        font-size: 15px;
       }
     }
   </style>
@@ -227,12 +269,12 @@
 <body>
   <div id="wakeLayer" aria-hidden="true"></div>
 
-  <!-- Buttons that stay fixed in the top-left corner -->
+  <!-- Main controls -->
   <div id="controls">
-    <button id="fullscreenBtn">Full Screen</button>
+    <button id="fullscreenBtn">Fullscreen</button>
     <button id="resetViewBtn">Reset View</button>
-    <button id="tabletDisplayBtn">Tablet Display Mode</button>
-    <button id="autoScrollBtn">Auto Scroll</button>
+    <button id="tabletDisplayBtn">Tablet</button>
+    <button id="autoScrollBtn">Auto</button>
   </div>
 
   <!-- Timeline zoom controls -->
@@ -519,7 +561,7 @@
           fullscreenBtn.textContent = "Exit";
         } else {
           await document.exitFullscreen();
-          fullscreenBtn.textContent = "Full Screen";
+          fullscreenBtn.textContent = "Fullscreen";
         }
       } catch (error) {
         console.warn("Fullscreen is not available on this device.", error);
@@ -529,13 +571,13 @@
     });
 
     document.addEventListener("fullscreenchange", () => {
-      fullscreenBtn.textContent = document.fullscreenElement ? "Exit" : "Full Screen";
+      fullscreenBtn.textContent = document.fullscreenElement ? "Exit" : "Fullscreen";
       showControls();
     });
 
     function startAutoScroll() {
       autoScrolling = true;
-      autoScrollBtn.textContent = "Stop Scroll";
+      autoScrollBtn.textContent = "Stop";
 
       autoScrollTimer = setInterval(() => {
         const maxScroll = timeline.scrollWidth - timeline.clientWidth;
@@ -551,7 +593,7 @@
 
     function stopAutoScroll() {
       autoScrolling = false;
-      autoScrollBtn.textContent = "Auto Scroll";
+      autoScrollBtn.textContent = "Auto";
       clearInterval(autoScrollTimer);
     }
 
