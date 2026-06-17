@@ -227,6 +227,7 @@
       width: 7600px;
       height: auto;
       display: block;
+      margin-top: var(--timeline-offset-y, 0px);
       touch-action: pan-x pan-y;
     }
 
@@ -371,7 +372,8 @@
     const tabletDisplaySettings = {
       zoom: 3,
       horizontalRatio: 0,
-      verticalRatio: 0.75
+      verticalRatio: 0.63,
+      topOffset: 110
     };
 
     let direction = 1;
@@ -380,6 +382,7 @@
     let autoScrollTimer;
     let fullscreenNoticeTimer;
     let autoScrolling = false;
+    let tabletDisplayModeActive = false;
     let svgAspectRatio = null;
     let initialViewApplied = false;
     const interactionEvents = [
@@ -578,6 +581,15 @@
       timeline.scrollTop = rect.height * verticalRatio - timeline.clientHeight / 2;
     }
 
+    function setTimelineTopOffset(offset) {
+      timelineSvg.style.setProperty("--timeline-offset-y", `${offset}px`);
+    }
+
+    function setTabletDisplayModeActive(active) {
+      tabletDisplayModeActive = active;
+      tabletDisplayBtn.hidden = active;
+    }
+
     function applyZoom(nextZoom) {
       zoom = Math.min(Math.max(nextZoom, 0.25), 6);
       updateTimelineSize();
@@ -621,6 +633,8 @@
     }
 
     function resetView() {
+      setTimelineTopOffset(0);
+      setTabletDisplayModeActive(false);
       applyZoom(defaultZoom);
       timeline.scrollLeft = 0;
       timeline.scrollTop = 0;
@@ -643,9 +657,13 @@
       timeline.scrollTop = 0;
       applyZoom(defaultZoom);
       applyZoom(tabletDisplaySettings.zoom);
+      setTimelineTopOffset(tabletDisplaySettings.topOffset);
+      setTabletDisplayModeActive(true);
 
       requestAnimationFrame(() => {
-        setTimelineView(tabletDisplaySettings.horizontalRatio, tabletDisplaySettings.verticalRatio);
+        requestAnimationFrame(() => {
+          setTimelineView(tabletDisplaySettings.horizontalRatio, tabletDisplaySettings.verticalRatio);
+        });
 
         if (!autoScrolling) {
           direction = 1;
@@ -682,6 +700,12 @@
 
     document.addEventListener("fullscreenchange", () => {
       fullscreenBtn.textContent = document.fullscreenElement ? "Exit" : "Full Screen";
+
+      if (!document.fullscreenElement && tabletDisplayModeActive) {
+        setTimelineTopOffset(0);
+        setTabletDisplayModeActive(false);
+      }
+
       showControls();
     });
 
