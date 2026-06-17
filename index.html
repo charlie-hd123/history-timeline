@@ -769,74 +769,6 @@
       setTimeout(() => button.blur(), 0);
     }
 
-    function addButtonAction(button, action) {
-      let lastDirectActionTime = 0;
-
-      function runDirectAction(event) {
-        const now = Date.now();
-
-        if (now - lastDirectActionTime < 350) return;
-
-        lastDirectActionTime = now;
-
-        if (event.cancelable) {
-          event.preventDefault();
-        }
-
-        action(event);
-        releaseButtonFocus(event);
-      }
-
-      button.addEventListener("pointerup", (event) => {
-        if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
-
-        runDirectAction(event);
-      });
-
-      button.addEventListener("touchend", (event) => {
-        runDirectAction(event);
-      }, { passive: false });
-
-      button.addEventListener("touchcancel", releaseButtonFocus, { passive: true });
-
-      button.addEventListener("pointercancel", releaseButtonFocus);
-
-      button.addEventListener("pointerdown", () => {
-        button.style.pointerEvents = "auto";
-      });
-
-      button.addEventListener("click", (event) => {
-        if (Date.now() - lastDirectActionTime < 500) {
-          event.preventDefault();
-          return;
-        }
-
-        action(event);
-        releaseButtonFocus(event);
-      });
-    }
-
-    function refreshAfterViewportChange() {
-      const previousScrollLeft = timeline.scrollLeft;
-      const previousScrollTop = timeline.scrollTop;
-
-      updateTimelineSize();
-      updateProgressLayout();
-      requestTimelineProgressUpdate();
-      timeline.scrollLeft = previousScrollLeft;
-      timeline.scrollTop = previousScrollTop;
-      showControls();
-
-      setTimeout(() => {
-        updateTimelineSize();
-        updateProgressLayout();
-        requestTimelineProgressUpdate();
-        timeline.scrollLeft = previousScrollLeft;
-        timeline.scrollTop = previousScrollTop;
-        showControls();
-      }, 350);
-    }
-
     function setDefaultView() {
       if (initialViewApplied) return;
 
@@ -891,7 +823,7 @@
       });
     }
 
-    addButtonAction(fullscreenBtn, async () => {
+    fullscreenBtn.addEventListener("click", async () => {
       if (isHandheldAppleDevice() && !document.fullscreenElement) {
         showFullscreenNotice();
       }
@@ -950,7 +882,7 @@
       clearInterval(autoScrollTimer);
     }
 
-    addButtonAction(autoScrollBtn, () => {
+    autoScrollBtn.addEventListener("click", () => {
       if (autoScrolling) {
         stopAutoScroll();
       } else {
@@ -960,11 +892,11 @@
       showControls();
     });
 
-    addButtonAction(tabletDisplayBtn, startTabletDisplayMode);
+    tabletDisplayBtn.addEventListener("click", startTabletDisplayMode);
 
-    addButtonAction(zoomInBtn, () => setZoom(zoom + zoomStep));
-    addButtonAction(zoomOutBtn, () => setZoom(zoom - zoomStep));
-    addButtonAction(resetViewBtn, resetView);
+    zoomInBtn.addEventListener("click", () => setZoom(zoom + zoomStep));
+    zoomOutBtn.addEventListener("click", () => setZoom(zoom - zoomStep));
+    resetViewBtn.addEventListener("click", resetView);
 
     timeline.addEventListener("scroll", requestTimelineProgressUpdate, { passive: true });
     timelineProgressTrack.addEventListener("click", seekTimelineFromProgress);
@@ -990,7 +922,9 @@
       zoomOutBtn,
       resetViewBtn
     ].forEach((button) => {
-      button.addEventListener("blur", releaseButtonFocus);
+      button.addEventListener("click", releaseButtonFocus);
+      button.addEventListener("touchend", releaseButtonFocus, { passive: true });
+      button.addEventListener("pointerup", releaseButtonFocus, { passive: true });
     });
     window.addEventListener("keydown", handleBrowserZoomShortcut, { capture: true });
     document.addEventListener("keydown", handleBrowserZoomShortcut, { capture: true });
@@ -998,13 +932,13 @@
 
     window.addEventListener("resize", () => {
       setZoom(zoom);
-      refreshAfterViewportChange();
+      updateProgressLayout();
+      requestTimelineProgressUpdate();
+      showControls();
     });
 
-    window.addEventListener("orientationchange", refreshAfterViewportChange);
-
     if (window.visualViewport) {
-      visualViewport.addEventListener("resize", refreshAfterViewportChange);
+      visualViewport.addEventListener("resize", showControls);
     }
 
     updateTimelineSize();
