@@ -456,6 +456,8 @@
     let initialViewApplied = false;
     let progressUpdateQueued = false;
     let draggingTimelineProgress = false;
+    let savedViewRestored = false;
+    const pwaRotationStateKey = "historyTimelinePwaRotationState";
     const interactionEvents = [
       "click",
       "mousedown",
@@ -479,6 +481,11 @@
       const isIPadOS = platform === "MacIntel" && navigator.maxTouchPoints > 1;
 
       return isiPhoneOrIPad || isIPadOS;
+    }
+
+    function isStandaloneAppleWebApp() {
+      return isHandheldAppleDevice()
+        && (navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches);
     }
 
     function showFullscreenNotice() {
@@ -770,10 +777,72 @@
       setTimeout(() => button.blur(), 0);
     }
 
+    function savePwaRotationState() {
+      try {
+        sessionStorage.setItem(pwaRotationStateKey, JSON.stringify({
+          zoom,
+          scrollLeft: timeline.scrollLeft,
+          scrollTop: timeline.scrollTop,
+          autoScrolling,
+          direction,
+          savedAt: Date.now()
+        }));
+      } catch (error) {
+        console.warn("Could not save rotation state.", error);
+      }
+    }
+
+    function restorePwaRotationState() {
+      if (savedViewRestored) return;
+
+      try {
+        const savedState = JSON.parse(sessionStorage.getItem(pwaRotationStateKey) || "null");
+
+        sessionStorage.removeItem(pwaRotationStateKey);
+
+        if (!savedState || Date.now() - savedState.savedAt > 8000) return;
+
+        savedViewRestored = true;
+        applyZoom(savedState.zoom || defaultZoom);
+
+        requestAnimationFrame(() => {
+          timeline.scrollLeft = savedState.scrollLeft || 0;
+          timeline.scrollTop = savedState.scrollTop || 0;
+          direction = savedState.direction || 1;
+
+          if (savedState.autoScrolling) {
+            startAutoScroll();
+          }
+
+          updateProgressLayout();
+          requestTimelineProgressUpdate();
+          showControls();
+        });
+      } catch (error) {
+        console.warn("Could not restore rotation state.", error);
+      }
+    }
+
+    function reloadStandaloneAppleWebAppAfterRotation() {
+      if (!isStandaloneAppleWebApp()) return;
+
+      savePwaRotationState();
+      setTimeout(() => window.location.reload(), 250);
+    }
+
     function setDefaultView() {
       if (initialViewApplied) return;
 
       requestAnimationFrame(() => {
+        if (!savedViewRestored) {
+          restorePwaRotationState();
+        }
+
+        if (savedViewRestored) {
+          initialViewApplied = true;
+          return;
+        }
+
         timeline.scrollLeft = 0;
         timeline.scrollTop = 0;
         initialViewApplied = true;
@@ -937,6 +1006,8 @@
       requestTimelineProgressUpdate();
       showControls();
     });
+
+    window.addEventListener("orientationchange", reloadStandaloneAppleWebAppAfterRotation);
 
     if (window.visualViewport) {
       visualViewport.addEventListener("resize", showControls);
