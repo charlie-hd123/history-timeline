@@ -303,7 +303,7 @@
       }
 
       #timelineProgress {
-        bottom: max(10px, env(safe-area-inset-bottom));
+        bottom: calc(max(10px, env(safe-area-inset-bottom)) + 14px);
         width: min(340px, calc(100vw - 24px));
         min-width: 0;
         padding: 8px 9px;
@@ -351,7 +351,7 @@
       }
 
       #timelineProgress {
-        bottom: 10px;
+        bottom: 24px;
         width: min(340px, calc(100vw - 24px));
         min-width: 0;
         padding: 8px 9px;
@@ -770,20 +770,43 @@
     }
 
     function addButtonAction(button, action) {
-      let handledPointerAction = false;
+      let lastDirectActionTime = 0;
+
+      function runDirectAction(event) {
+        const now = Date.now();
+
+        if (now - lastDirectActionTime < 350) return;
+
+        lastDirectActionTime = now;
+
+        if (event.cancelable) {
+          event.preventDefault();
+        }
+
+        action(event);
+        releaseButtonFocus(event);
+      }
 
       button.addEventListener("pointerup", (event) => {
         if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
 
-        handledPointerAction = true;
-        event.preventDefault();
-        action(event);
-        releaseButtonFocus(event);
+        runDirectAction(event);
+      });
+
+      button.addEventListener("touchend", (event) => {
+        runDirectAction(event);
+      }, { passive: false });
+
+      button.addEventListener("touchcancel", releaseButtonFocus, { passive: true });
+
+      button.addEventListener("pointercancel", releaseButtonFocus);
+
+      button.addEventListener("pointerdown", () => {
+        button.style.pointerEvents = "auto";
       });
 
       button.addEventListener("click", (event) => {
-        if (handledPointerAction) {
-          handledPointerAction = false;
+        if (Date.now() - lastDirectActionTime < 500) {
           event.preventDefault();
           return;
         }
@@ -967,8 +990,7 @@
       zoomOutBtn,
       resetViewBtn
     ].forEach((button) => {
-      button.addEventListener("touchend", releaseButtonFocus, { passive: true });
-      button.addEventListener("pointerup", releaseButtonFocus, { passive: true });
+      button.addEventListener("blur", releaseButtonFocus);
     });
     window.addEventListener("keydown", handleBrowserZoomShortcut, { capture: true });
     document.addEventListener("keydown", handleBrowserZoomShortcut, { capture: true });
