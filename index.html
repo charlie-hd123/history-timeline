@@ -102,6 +102,65 @@
       display: block;
     }
 
+    #timelineProgress {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      z-index: 12;
+      width: min(520px, 44vw);
+      min-width: 280px;
+      padding: 10px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.42);
+      border-radius: 8px;
+      background: rgba(48, 48, 48, 0.68);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+      color: white;
+      opacity: 0.92;
+      transform: translateX(-50%);
+      visibility: visible;
+      transition: opacity 0.4s ease, visibility 0s linear 0s;
+      backdrop-filter: blur(10px);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #timelineProgress.hidden {
+      opacity: 0;
+      pointer-events: none;
+      visibility: hidden;
+      transition: opacity 0.4s ease, visibility 0s linear 0.4s;
+    }
+
+    #timelineProgressTrack {
+      position: relative;
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.28);
+      cursor: pointer;
+      touch-action: none;
+    }
+
+    #timelineProgressFill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #c64848 0%, #d99319 31%, #43cfd0 65%, #8c63a4 100%);
+    }
+
+    #timelineProgressMarker {
+      position: absolute;
+      top: 50%;
+      left: 0%;
+      width: 15px;
+      height: 15px;
+      border: 2px solid rgba(255, 255, 255, 0.95);
+      border-radius: 999px;
+      background: #1e1e1e;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+      transform: translate(-50%, -50%);
+    }
+
     #fullscreenNotice {
       position: fixed;
       top: 72px;
@@ -283,6 +342,13 @@
         gap: 6px;
       }
 
+      #timelineProgress {
+        bottom: 66px;
+        width: calc(100vw - 24px);
+        min-width: 0;
+        padding: 8px 9px;
+      }
+
       button {
         border-radius: 5px;
         font-size: 11px;
@@ -345,6 +411,13 @@
     <button id="downBtn">↓</button>
   </div>
 
+  <div id="timelineProgress" aria-label="Timeline position">
+    <div id="timelineProgressTrack">
+      <div id="timelineProgressFill"></div>
+      <div id="timelineProgressMarker"></div>
+    </div>
+  </div>
+
   <!-- Timeline SVG -->
   <div id="timeline">
     <div id="timelineSvg" role="img" aria-label="History timeline">
@@ -361,6 +434,10 @@
     const zoomControls = document.getElementById("zoomControls");
     const dpad = document.getElementById("dpad");
     const wakeLayer = document.getElementById("wakeLayer");
+    const timelineProgress = document.getElementById("timelineProgress");
+    const timelineProgressTrack = document.getElementById("timelineProgressTrack");
+    const timelineProgressFill = document.getElementById("timelineProgressFill");
+    const timelineProgressMarker = document.getElementById("timelineProgressMarker");
     const fullscreenNotice = document.getElementById("fullscreenNotice");
     const fullscreenBtn = document.getElementById("fullscreenBtn");
     const autoScrollBtn = document.getElementById("autoScrollBtn");
@@ -393,6 +470,7 @@
     let tabletDisplayModeActive = false;
     let svgAspectRatio = null;
     let initialViewApplied = false;
+    let progressUpdateQueued = false;
     const interactionEvents = [
       "click",
       "mousedown",
@@ -507,12 +585,14 @@
       controls.classList.remove("hidden");
       zoomControls.classList.remove("hidden");
       dpad.classList.remove("hidden");
+      timelineProgress.classList.remove("hidden");
       wakeLayer.classList.remove("active");
       clearTimeout(hideControlsTimer);
       hideControlsTimer = setTimeout(() => {
         controls.classList.add("hidden");
         zoomControls.classList.add("hidden");
         dpad.classList.add("hidden");
+        timelineProgress.classList.add("hidden");
         wakeLayer.classList.add("active");
       }, 5000);
     }
@@ -521,6 +601,40 @@
       interactionEvents.forEach((eventName) => {
         target.addEventListener(eventName, showControls, { passive: true });
       });
+    }
+
+    function getTimelineProgress() {
+      const maxScroll = timeline.scrollWidth - timeline.clientWidth;
+
+      if (maxScroll <= 0) return 0;
+
+      return Math.min(Math.max(timeline.scrollLeft / maxScroll, 0), 1);
+    }
+
+    function updateTimelineProgress() {
+      const progress = getTimelineProgress();
+      const percent = Math.round(progress * 100);
+
+      timelineProgressFill.style.width = `${percent}%`;
+      timelineProgressMarker.style.left = `${percent}%`;
+      progressUpdateQueued = false;
+    }
+
+    function requestTimelineProgressUpdate() {
+      if (progressUpdateQueued) return;
+
+      progressUpdateQueued = true;
+      requestAnimationFrame(updateTimelineProgress);
+    }
+
+    function seekTimelineFromProgress(event) {
+      const rect = timelineProgressTrack.getBoundingClientRect();
+      const progress = Math.min(Math.max((event.clientX - rect.left) / rect.width, 0), 1);
+      const maxScroll = timeline.scrollWidth - timeline.clientWidth;
+
+      timeline.scrollTo({ left: maxScroll * progress, behavior: "smooth" });
+      requestTimelineProgressUpdate();
+      showControls();
     }
 
     function addSvgInteractionListeners() {
@@ -548,11 +662,15 @@
       const dpadRect = dpad.classList.contains("hidden")
         ? { top: timeline.clientHeight }
         : dpad.getBoundingClientRect();
+      const progressRect = timelineProgress.classList.contains("hidden")
+        ? { top: timeline.clientHeight }
+        : timelineProgress.getBoundingClientRect();
       const top = Math.max(0, controlsRect.bottom || 0) + padding;
       const bottomOverlayTop = Math.min(
         timeline.clientHeight,
         zoomRect.top || timeline.clientHeight,
-        dpadRect.top || timeline.clientHeight
+        dpadRect.top || timeline.clientHeight,
+        progressRect.top || timeline.clientHeight
       );
       const bottom = Math.max(top + 1, bottomOverlayTop - padding);
 
@@ -736,6 +854,8 @@
 
         if (timeline.scrollLeft >= maxScroll) direction = -1;
         if (timeline.scrollLeft <= 0) direction = 1;
+
+        requestTimelineProgressUpdate();
       }, 50);
     }
 
@@ -781,6 +901,9 @@
       showControls();
     });
 
+    timeline.addEventListener("scroll", requestTimelineProgressUpdate, { passive: true });
+    timelineProgressTrack.addEventListener("pointerdown", seekTimelineFromProgress);
+
     addInteractionListeners(document);
     addInteractionListeners(window);
     addInteractionListeners(timeline);
@@ -812,6 +935,7 @@
 
     window.addEventListener("resize", () => {
       setZoom(zoom);
+      requestTimelineProgressUpdate();
       showControls();
     });
 
@@ -820,6 +944,7 @@
     }
 
     updateTimelineSize();
+    updateTimelineProgress();
     measureTimelineSvg();
     loadInlineTimelineSvg();
     showControls();
