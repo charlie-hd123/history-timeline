@@ -18,6 +18,8 @@
       font-family: Arial, sans-serif;
       touch-action: pan-x pan-y;
       -webkit-tap-highlight-color: transparent;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
 
     /* Fixed buttons */
@@ -104,10 +106,10 @@
 
     #timelineProgress {
       position: fixed;
-      left: 50%;
-      bottom: 18px;
+      left: var(--progress-left, 50%);
+      bottom: var(--progress-bottom, 18px);
       z-index: 12;
-      width: min(520px, 44vw);
+      width: var(--progress-width, min(520px, 44vw));
       min-width: 280px;
       padding: 10px 12px;
       border: 1px solid rgba(255, 255, 255, 0.42);
@@ -116,7 +118,7 @@
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
       color: white;
       opacity: 0.92;
-      transform: translateX(-50%);
+      transform: translateX(var(--progress-shift, -50%));
       visibility: visible;
       transition: opacity 0.4s ease, visibility 0s linear 0s;
       backdrop-filter: blur(10px);
@@ -375,8 +377,8 @@
       }
 
       #timelineProgress {
-        bottom: calc(max(10px, env(safe-area-inset-bottom)) + 118px);
-        width: min(300px, calc(100vw - 96px));
+        bottom: var(--progress-bottom, calc(max(10px, env(safe-area-inset-bottom)) + 118px));
+        width: var(--progress-width, min(300px, calc(100vw - 96px)));
         min-width: 0;
         padding: 6px 8px;
         border-radius: 7px;
@@ -430,8 +432,8 @@
 
     @media (max-width: 799px) and (orientation: landscape) {
       #timelineProgress {
-        bottom: calc(max(10px, env(safe-area-inset-bottom)) + 52px);
-        width: min(280px, 34vw);
+        bottom: var(--progress-bottom, calc(max(10px, env(safe-area-inset-bottom)) + 52px));
+        width: var(--progress-width, min(280px, 34vw));
       }
     }
 
@@ -452,8 +454,8 @@
       }
 
       #timelineProgress {
-        bottom: calc(max(10px, env(safe-area-inset-bottom)) + 52px);
-        width: min(280px, 34vw);
+        bottom: var(--progress-bottom, calc(max(10px, env(safe-area-inset-bottom)) + 52px));
+        width: var(--progress-width, min(280px, 34vw));
         min-width: 0;
         padding: 6px 8px;
       }
@@ -719,6 +721,7 @@
     }
 
     function showControls() {
+      updateProgressLayout();
       controls.classList.remove("hidden");
       zoomControls.classList.remove("hidden");
       dpad.classList.remove("hidden");
@@ -762,6 +765,56 @@
 
       progressUpdateQueued = true;
       requestAnimationFrame(updateTimelineProgress);
+    }
+
+    function resetProgressLayout() {
+      timelineProgress.style.removeProperty("--progress-left");
+      timelineProgress.style.removeProperty("--progress-bottom");
+      timelineProgress.style.removeProperty("--progress-width");
+      timelineProgress.style.removeProperty("--progress-shift");
+    }
+
+    function updateProgressLayout() {
+      const phoneLayout = window.matchMedia("(max-width: 799px), (max-height: 500px) and (max-width: 950px)").matches;
+
+      if (!phoneLayout) {
+        resetProgressLayout();
+        return;
+      }
+
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const gap = 12;
+      const minProgressWidth = 120;
+      const maxProgressWidth = Math.min(300, viewportWidth - gap * 2);
+      const dpadRect = dpad.getBoundingClientRect();
+      const zoomRect = zoomControls.getBoundingClientRect();
+      const progressRect = timelineProgress.getBoundingClientRect();
+      const middleLeft = dpadRect.right + gap;
+      const middleRight = zoomRect.left - gap;
+      const middleWidth = middleRight - middleLeft;
+      const bottomInset = Math.max(10, viewportHeight - Math.max(dpadRect.bottom, zoomRect.bottom));
+
+      if (middleWidth >= minProgressWidth) {
+        const width = Math.min(maxProgressWidth, middleWidth);
+        const left = middleLeft + middleWidth / 2;
+        const controlHeight = Math.max(dpadRect.height, zoomRect.height);
+        const bottom = bottomInset + Math.max(0, (controlHeight - progressRect.height) / 2);
+
+        timelineProgress.style.setProperty("--progress-left", `${left}px`);
+        timelineProgress.style.setProperty("--progress-bottom", `${bottom}px`);
+        timelineProgress.style.setProperty("--progress-width", `${width}px`);
+        timelineProgress.style.setProperty("--progress-shift", "-50%");
+        return;
+      }
+
+      const topOfBottomControls = Math.min(dpadRect.top, zoomRect.top);
+      const bottom = Math.max(gap, viewportHeight - topOfBottomControls + gap);
+
+      timelineProgress.style.setProperty("--progress-left", "50%");
+      timelineProgress.style.setProperty("--progress-bottom", `${bottom}px`);
+      timelineProgress.style.setProperty("--progress-width", `${maxProgressWidth}px`);
+      timelineProgress.style.setProperty("--progress-shift", "-50%");
     }
 
     function setTimelineProgressFromClientX(clientX, behavior = "auto") {
@@ -1104,15 +1157,20 @@
 
     window.addEventListener("resize", () => {
       setZoom(zoom);
+      updateProgressLayout();
       requestTimelineProgressUpdate();
       showControls();
     });
 
     if (window.visualViewport) {
-      visualViewport.addEventListener("resize", showControls);
+      visualViewport.addEventListener("resize", () => {
+        updateProgressLayout();
+        showControls();
+      });
     }
 
     updateTimelineSize();
+    updateProgressLayout();
     updateTimelineProgress();
     measureTimelineSvg();
     loadInlineTimelineSvg();
