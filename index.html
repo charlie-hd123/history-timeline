@@ -27,22 +27,35 @@
       left: 10px;
       z-index: 10;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
+      flex-wrap: wrap;
       align-items: flex-start;
       gap: 6px;
       opacity: 1;
       transition: opacity 0.4s ease;
     }
 
-    #controls.hidden {
+    #zoomControls {
+      position: fixed;
+      left: 10px;
+      bottom: 10px;
+      z-index: 10;
+      display: flex;
+      gap: 6px;
+      opacity: 1;
+      transition: opacity 0.4s ease;
+    }
+
+    #controls.hidden,
+    #zoomControls.hidden {
       opacity: 0;
       pointer-events: none;
     }
 
     #dpad {
       position: fixed;
-      top: 10px;
       right: 10px;
+      bottom: 10px;
       z-index: 10;
       display: grid;
       grid-template-columns: repeat(3, 42px);
@@ -94,21 +107,6 @@
     #controls button {
       min-height: 44px;
       min-width: 58px;
-    }
-
-    #zoomControls {
-      display: flex;
-      gap: 6px;
-    }
-
-    #topControls {
-      display: flex;
-      gap: 6px;
-    }
-
-    #scrollControls {
-      display: flex;
-      gap: 6px;
     }
 
     #dpad button {
@@ -188,13 +186,13 @@
       #controls {
         top: 8px;
         left: 8px;
-        right: 72px;
+        right: 8px;
         gap: 4px;
       }
 
-      #topControls,
-      #scrollControls {
-        flex-wrap: wrap;
+      #zoomControls {
+        left: 8px;
+        bottom: 8px;
         gap: 4px;
       }
 
@@ -211,7 +209,6 @@
       }
 
       #dpad {
-        top: auto;
         right: 8px;
         bottom: 8px;
         grid-template-columns: repeat(3, 34px);
@@ -232,18 +229,16 @@
 
   <!-- Buttons that stay fixed in the top-left corner -->
   <div id="controls">
-    <div id="topControls">
-      <button id="fullscreenBtn">Full Screen</button>
-      <div id="zoomControls">
-        <button id="zoomInBtn">+</button>
-        <button id="zoomOutBtn">-</button>
-        <button id="resetZoomBtn">Reset Zoom</button>
-      </div>
-    </div>
-    <div id="scrollControls">
-      <button id="autoScrollBtn">Auto Scroll</button>
-      <button id="tabletDisplayBtn">Tablet Display Mode</button>
-    </div>
+    <button id="fullscreenBtn">Full Screen</button>
+    <button id="resetViewBtn">Reset View</button>
+    <button id="tabletDisplayBtn">Tablet Display Mode</button>
+    <button id="autoScrollBtn">Auto Scroll</button>
+  </div>
+
+  <!-- Timeline zoom controls -->
+  <div id="zoomControls">
+    <button id="zoomInBtn">+</button>
+    <button id="zoomOutBtn">-</button>
   </div>
 
   <!-- Movement buttons in a D-pad layout -->
@@ -267,6 +262,7 @@
     const timelineSvg = document.getElementById("timelineSvg");
     const timelineSvgFallback = document.getElementById("timelineSvgFallback");
     const controls = document.getElementById("controls");
+    const zoomControls = document.getElementById("zoomControls");
     const dpad = document.getElementById("dpad");
     const wakeLayer = document.getElementById("wakeLayer");
     const fullscreenBtn = document.getElementById("fullscreenBtn");
@@ -274,14 +270,13 @@
     const tabletDisplayBtn = document.getElementById("tabletDisplayBtn");
     const zoomInBtn = document.getElementById("zoomInBtn");
     const zoomOutBtn = document.getElementById("zoomOutBtn");
-    const resetZoomBtn = document.getElementById("resetZoomBtn");
+    const resetViewBtn = document.getElementById("resetViewBtn");
     const leftBtn = document.getElementById("leftBtn");
     const rightBtn = document.getElementById("rightBtn");
     const upBtn = document.getElementById("upBtn");
     const downBtn = document.getElementById("downBtn");
     const timelineSvgPath = "assets/timeline.svg";
-    const defaultZoom = 1.25;
-    const defaultVerticalRatio = 0.5;
+    const defaultZoom = 1.5;
     const zoomStep = 0.15;
     const arrowStep = 120;
     const tabletDisplaySettings = {
@@ -303,7 +298,6 @@
       "mousemove",
       "pointerdown",
       "pointermove",
-      "scroll",
       "touchmove",
       "touchstart",
       "wheel",
@@ -382,11 +376,13 @@
 
     function showControls() {
       controls.classList.remove("hidden");
+      zoomControls.classList.remove("hidden");
       dpad.classList.remove("hidden");
       wakeLayer.classList.remove("active");
       clearTimeout(hideControlsTimer);
       hideControlsTimer = setTimeout(() => {
         controls.classList.add("hidden");
+        zoomControls.classList.add("hidden");
         dpad.classList.add("hidden");
         wakeLayer.classList.add("active");
       }, 5000);
@@ -446,19 +442,22 @@
     function handleBrowserZoomShortcut(event) {
       if (!event.metaKey && !event.ctrlKey) return;
 
-      if (event.key === "+" || event.key === "=") {
-        event.preventDefault();
-        setZoom(zoom + zoomStep);
-      }
+      const key = event.key;
+      const code = event.code;
+      const isZoomIn = key === "+" || key === "=" || code === "Equal" || code === "NumpadAdd";
+      const isZoomOut = key === "-" || code === "Minus" || code === "NumpadSubtract";
+      const isReset = key === "0" || code === "Digit0" || code === "Numpad0";
 
-      if (event.key === "-") {
-        event.preventDefault();
-        setZoom(zoom - zoomStep);
-      }
+      if (!isZoomIn && !isZoomOut && !isReset) return;
 
-      if (event.key === "0") {
-        event.preventDefault();
-        setZoom(defaultZoom);
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation?.();
+
+      if (isZoomIn) setZoom(zoom + zoomStep);
+      if (isZoomOut) setZoom(zoom - zoomStep);
+      if (isReset) {
+        resetView();
       }
     }
 
@@ -471,9 +470,17 @@
       if (initialViewApplied) return;
 
       requestAnimationFrame(() => {
-        setTimelineView(0, defaultVerticalRatio);
+        timeline.scrollLeft = 0;
+        timeline.scrollTop = 0;
         initialViewApplied = true;
       });
+    }
+
+    function resetView() {
+      applyZoom(defaultZoom);
+      timeline.scrollLeft = 0;
+      timeline.scrollTop = 0;
+      showControls();
     }
 
     async function startTabletDisplayMode() {
@@ -562,7 +569,7 @@
 
     zoomInBtn.addEventListener("click", () => setZoom(zoom + zoomStep));
     zoomOutBtn.addEventListener("click", () => setZoom(zoom - zoomStep));
-    resetZoomBtn.addEventListener("click", () => setZoom(defaultZoom));
+    resetViewBtn.addEventListener("click", resetView);
 
     leftBtn.addEventListener("click", () => {
       timeline.scrollBy({ left: -arrowStep, behavior: "smooth" });
@@ -599,7 +606,7 @@
       tabletDisplayBtn,
       zoomInBtn,
       zoomOutBtn,
-      resetZoomBtn,
+      resetViewBtn,
       leftBtn,
       rightBtn,
       upBtn,
@@ -609,7 +616,8 @@
       button.addEventListener("touchend", releaseButtonFocus, { passive: true });
       button.addEventListener("pointerup", releaseButtonFocus, { passive: true });
     });
-    document.addEventListener("keydown", handleBrowserZoomShortcut);
+    window.addEventListener("keydown", handleBrowserZoomShortcut, { capture: true });
+    document.addEventListener("keydown", handleBrowserZoomShortcut, { capture: true });
     timelineSvgFallback.addEventListener("load", addSvgInteractionListeners);
 
     window.addEventListener("resize", () => {
@@ -619,7 +627,6 @@
 
     if (window.visualViewport) {
       visualViewport.addEventListener("resize", showControls);
-      visualViewport.addEventListener("scroll", showControls);
     }
 
     updateTimelineSize();
