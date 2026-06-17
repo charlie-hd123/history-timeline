@@ -465,10 +465,36 @@
       }
     }
 
+    function getUsableViewportCenter() {
+      const padding = 10;
+      const controlsRect = controls.classList.contains("hidden")
+        ? { bottom: 0 }
+        : controls.getBoundingClientRect();
+      const zoomRect = zoomControls.classList.contains("hidden")
+        ? { top: timeline.clientHeight }
+        : zoomControls.getBoundingClientRect();
+      const dpadRect = dpad.classList.contains("hidden")
+        ? { top: timeline.clientHeight }
+        : dpad.getBoundingClientRect();
+      const top = Math.max(0, controlsRect.bottom || 0) + padding;
+      const bottomOverlayTop = Math.min(
+        timeline.clientHeight,
+        zoomRect.top || timeline.clientHeight,
+        dpadRect.top || timeline.clientHeight
+      );
+      const bottom = Math.max(top + 1, bottomOverlayTop - padding);
+
+      return {
+        x: timeline.clientWidth / 2,
+        y: (top + bottom) / 2
+      };
+    }
+
     function setZoom(nextZoom) {
+      const center = getUsableViewportCenter();
       const oldRect = timelineSvg.getBoundingClientRect();
-      const oldCenterX = timeline.scrollLeft + timeline.clientWidth / 2;
-      const oldCenterY = timeline.scrollTop + timeline.clientHeight / 2;
+      const oldCenterX = timeline.scrollLeft + center.x;
+      const oldCenterY = timeline.scrollTop + center.y;
       const centerXRatio = oldRect.width ? oldCenterX / oldRect.width : 0.5;
       const centerYRatio = oldRect.height ? oldCenterY / oldRect.height : 0.5;
 
@@ -477,8 +503,8 @@
       requestAnimationFrame(() => {
         const newRect = timelineSvg.getBoundingClientRect();
 
-        timeline.scrollLeft = centerXRatio * newRect.width - timeline.clientWidth / 2;
-        timeline.scrollTop = centerYRatio * newRect.height - timeline.clientHeight / 2;
+        timeline.scrollLeft = centerXRatio * newRect.width - center.x;
+        timeline.scrollTop = centerYRatio * newRect.height - center.y;
 
         showControls();
       });
