@@ -328,8 +328,9 @@
     const upBtn = document.getElementById("upBtn");
     const downBtn = document.getElementById("downBtn");
     const timelineSvgPath = "assets/timeline.svg";
-    const defaultZoom = 1.45;
     const zoomStep = 0.15;
+    const desktopDefaultZoom = 1.45;
+    const defaultZoom = isTabletDevice() ? desktopDefaultZoom - zoomStep * 3 : desktopDefaultZoom;
     const arrowStep = 120;
     const tabletDisplaySettings = {
       zoom: 1.6,
@@ -355,6 +356,10 @@
       "wheel",
       "keydown"
     ];
+
+    function isTabletDevice() {
+      return window.matchMedia("(min-width: 800px) and (pointer: coarse)").matches;
+    }
 
     function getBaseWidth() {
       if (window.innerWidth >= 1200) return 16000;
