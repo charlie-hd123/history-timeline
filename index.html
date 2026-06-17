@@ -23,8 +23,8 @@
     /* Fixed buttons */
     #controls {
       position: fixed;
-      top: 12px;
-      left: 10px;
+      top: 18px;
+      left: 18px;
       z-index: 10;
       display: flex;
       flex-direction: row;
@@ -32,7 +32,7 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      max-width: calc(100vw - 24px);
+      max-width: calc(100vw - 36px);
       padding: 5px;
       border: 1px solid rgba(255, 255, 255, 0.35);
       border-radius: 8px;
@@ -45,8 +45,8 @@
 
     #zoomControls {
       position: fixed;
-      right: 10px;
-      bottom: 10px;
+      right: 18px;
+      bottom: 18px;
       z-index: 10;
       display: flex;
       gap: 8px;
@@ -68,12 +68,12 @@
 
     #dpad {
       position: fixed;
-      left: 10px;
-      bottom: 10px;
+      left: 18px;
+      bottom: 18px;
       z-index: 10;
       display: grid;
-      grid-template-columns: repeat(3, 36px);
-      grid-template-rows: repeat(3, 36px);
+      grid-template-columns: repeat(3, 39px);
+      grid-template-rows: repeat(3, 39px);
       gap: 4px;
       padding: 5px;
       border: 1px solid rgba(255, 255, 255, 0.35);
@@ -235,17 +235,49 @@
     }
 
     #dpad button {
+      position: relative;
+      width: 39px;
+      height: 39px;
+      box-sizing: border-box;
       padding: 6px;
-      font-size: 17px;
-      min-width: 42px;
-      min-height: 42px;
+      font-size: 24px;
+      line-height: 1;
+      min-width: 39px;
+      min-height: 39px;
+    }
+
+    .arrowIcon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      display: block;
+      width: 26px;
+      height: 26px;
+      transform: translate(-50%, -50%);
+    }
+
+    .arrowIcon path {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     #zoomControls button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
       min-width: 56px;
       min-height: 56px;
       padding: 4px;
-      font-size: 26px;
+      font-size: 34px;
+      line-height: 1;
+    }
+
+    #zoomControls #zoomOutBtn {
+      font-size: 38px;
+      padding-bottom: 4px;
     }
 
     #upBtn {
@@ -328,16 +360,16 @@
 
     @media (max-width: 799px) {
       #controls {
-        top: 8px;
-        left: 8px;
-        max-width: calc(100vw - 16px);
+        top: 12px;
+        left: 12px;
+        max-width: calc(100vw - 24px);
         padding: 4px;
         gap: 6px;
       }
 
       #zoomControls {
-        right: 8px;
-        bottom: 8px;
+        right: 12px;
+        bottom: 12px;
         padding: 4px;
         gap: 6px;
       }
@@ -362,8 +394,8 @@
       }
 
       #dpad {
-        left: 8px;
-        bottom: 8px;
+        left: 12px;
+        bottom: 12px;
         grid-template-columns: repeat(3, 30px);
         grid-template-rows: repeat(3, 30px);
         padding: 4px;
@@ -371,16 +403,28 @@
       }
 
       #dpad button {
+        width: 30px;
+        height: 30px;
         min-width: 30px;
         min-height: 30px;
         padding: 3px;
-        font-size: 12px;
+        font-size: 19px;
+      }
+
+      .arrowIcon {
+        width: 21px;
+        height: 21px;
       }
 
       #zoomControls button {
         min-width: 42px;
         min-height: 42px;
-        font-size: 20px;
+        font-size: 28px;
+      }
+
+      #zoomControls #zoomOutBtn {
+        font-size: 31px;
+        padding-bottom: 3px;
       }
     }
 
@@ -415,16 +459,32 @@
 
   <!-- Timeline zoom controls -->
   <div id="zoomControls">
-    <button id="zoomOutBtn">-</button>
+    <button id="zoomOutBtn">−</button>
     <button id="zoomInBtn">+</button>
   </div>
 
   <!-- Movement buttons in a D-pad layout -->
   <div id="dpad">
-    <button id="upBtn">↑</button>
-    <button id="leftBtn">←</button>
-    <button id="rightBtn">→</button>
-    <button id="downBtn">↓</button>
+    <button id="upBtn">
+      <svg class="arrowIcon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 19V5M5 12l7-7 7 7"></path>
+      </svg>
+    </button>
+    <button id="leftBtn">
+      <svg class="arrowIcon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M19 12H5M12 5l-7 7 7 7"></path>
+      </svg>
+    </button>
+    <button id="rightBtn">
+      <svg class="arrowIcon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 12h14M12 5l7 7-7 7"></path>
+      </svg>
+    </button>
+    <button id="downBtn">
+      <svg class="arrowIcon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 5v14M5 12l7 7 7-7"></path>
+      </svg>
+    </button>
   </div>
 
   <div id="timelineProgress" aria-label="Timeline position">
@@ -487,6 +547,7 @@
     let svgAspectRatio = null;
     let initialViewApplied = false;
     let progressUpdateQueued = false;
+    let draggingTimelineProgress = false;
     const interactionEvents = [
       "click",
       "mousedown",
@@ -643,13 +704,41 @@
       requestAnimationFrame(updateTimelineProgress);
     }
 
-    function seekTimelineFromProgress(event) {
+    function setTimelineProgressFromClientX(clientX, behavior = "auto") {
       const rect = timelineProgressTrack.getBoundingClientRect();
-      const progress = Math.min(Math.max((event.clientX - rect.left) / rect.width, 0), 1);
+      const progress = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
       const maxScroll = timeline.scrollWidth - timeline.clientWidth;
 
-      timeline.scrollTo({ left: maxScroll * progress, behavior: "smooth" });
+      timeline.scrollTo({ left: maxScroll * progress, behavior });
       requestTimelineProgressUpdate();
+    }
+
+    function seekTimelineFromProgress(event) {
+      setTimelineProgressFromClientX(event.clientX, "smooth");
+      showControls();
+    }
+
+    function startTimelineProgressDrag(event) {
+      draggingTimelineProgress = true;
+      timelineProgressTrack.setPointerCapture?.(event.pointerId);
+      setTimelineProgressFromClientX(event.clientX);
+      event.preventDefault();
+      showControls();
+    }
+
+    function dragTimelineProgress(event) {
+      if (!draggingTimelineProgress) return;
+
+      setTimelineProgressFromClientX(event.clientX);
+      event.preventDefault();
+      showControls();
+    }
+
+    function stopTimelineProgressDrag(event) {
+      if (!draggingTimelineProgress) return;
+
+      draggingTimelineProgress = false;
+      timelineProgressTrack.releasePointerCapture?.(event.pointerId);
       showControls();
     }
 
@@ -918,7 +1007,11 @@
     });
 
     timeline.addEventListener("scroll", requestTimelineProgressUpdate, { passive: true });
-    timelineProgressTrack.addEventListener("pointerdown", seekTimelineFromProgress);
+    timelineProgressTrack.addEventListener("click", seekTimelineFromProgress);
+    timelineProgressTrack.addEventListener("pointerdown", startTimelineProgressDrag);
+    timelineProgressTrack.addEventListener("pointermove", dragTimelineProgress);
+    timelineProgressTrack.addEventListener("pointerup", stopTimelineProgressDrag);
+    timelineProgressTrack.addEventListener("pointercancel", stopTimelineProgressDrag);
 
     addInteractionListeners(document);
     addInteractionListeners(window);
