@@ -450,6 +450,9 @@
     let hideControlsTimer;
     let autoScrollTimer;
     let fullscreenNoticeTimer;
+    let screenWakeLock = null;
+    let screenWakeLockRequested = false;
+    let screenWakeLockRetryTimer;
     let autoScrolling = false;
     let tabletDisplayModeActive = false;
     let svgAspectRatio = null;
@@ -501,6 +504,60 @@
       fullscreenNoticeTimer = setTimeout(() => {
         fullscreenNotice.classList.remove("visible");
       }, 8500);
+    }
+
+    function isScreenWakeLockAvailable() {
+      return "wakeLock" in navigator && window.isSecureContext;
+    }
+
+    function scheduleScreenWakeLockRetry() {
+      if (!screenWakeLockRequested || document.visibilityState !== "visible") return;
+
+      clearTimeout(screenWakeLockRetryTimer);
+      screenWakeLockRetryTimer = setTimeout(() => {
+        requestScreenWakeLock();
+      }, 1000);
+    }
+
+    async function requestScreenWakeLock() {
+      screenWakeLockRequested = true;
+
+      if (!isScreenWakeLockAvailable()) {
+        console.warn("Screen Wake Lock is not available. Use HTTPS and a supported browser to stop display dimming.");
+        return;
+      }
+
+      if (screenWakeLock) return;
+
+      try {
+        screenWakeLock = await navigator.wakeLock.request("screen");
+        console.info("Screen Wake Lock is active. The page should not dim or lock while visible.");
+
+        screenWakeLock.addEventListener("release", () => {
+          screenWakeLock = null;
+          console.info("Screen Wake Lock was released.");
+          scheduleScreenWakeLockRetry();
+        });
+      } catch (error) {
+        screenWakeLock = null;
+        console.warn("Screen Wake Lock request failed.", error);
+        scheduleScreenWakeLockRetry();
+      }
+    }
+
+    async function releaseScreenWakeLock() {
+      screenWakeLockRequested = false;
+      clearTimeout(screenWakeLockRetryTimer);
+
+      if (!screenWakeLock) return;
+
+      try {
+        await screenWakeLock.release();
+      } catch (error) {
+        console.warn("Screen Wake Lock release failed.", error);
+      } finally {
+        screenWakeLock = null;
+      }
     }
 
     function getBaseWidth() {
@@ -860,6 +917,7 @@
 
     async function startTabletDisplayMode() {
       showControls();
+      requestScreenWakeLock();
 
       try {
         if (!document.fullscreenElement) {
@@ -894,6 +952,8 @@
     }
 
     fullscreenBtn.addEventListener("click", async () => {
+      requestScreenWakeLock();
+
       if (isHandheldAppleDevice() && !document.fullscreenElement) {
         showFullscreenNotice();
       }
@@ -928,6 +988,12 @@
       showControls();
     });
 
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && screenWakeLockRequested && !screenWakeLock) {
+        requestScreenWakeLock();
+      }
+    });
+
     function startAutoScroll() {
       autoScrolling = true;
       autoScrollBtn.textContent = "Stop Scroll";
@@ -953,6 +1019,8 @@
     }
 
     autoScrollBtn.addEventListener("click", () => {
+      requestScreenWakeLock();
+
       if (autoScrolling) {
         stopAutoScroll();
       } else {
@@ -980,6 +1048,9 @@
     addInteractionListeners(timeline);
     addInteractionListeners(timelineSvg);
     addInteractionListeners(wakeLayer);
+    ["click", "pointerdown", "touchstart", "keydown"].forEach((eventName) => {
+      document.addEventListener(eventName, requestScreenWakeLock, { passive: true, once: true });
+    });
     blockBrowserPinchZoom(document);
     blockBrowserPinchZoom(timeline);
     blockBrowserPinchZoom(timelineSvg);
@@ -1019,6 +1090,7 @@
     measureTimelineSvg();
     loadInlineTimelineSvg();
     showControls();
+    requestScreenWakeLock();
   </script>
 </body>
 </html>
