@@ -437,7 +437,12 @@
     const timelineSvgPath = "assets/timeline.svg";
     const zoomStep = 0.15;
     const desktopDefaultZoom = 1.45;
-    const defaultZoom = isTabletDevice() ? desktopDefaultZoom - zoomStep * 3 : desktopDefaultZoom;
+    const mobileDefaultZoom = desktopDefaultZoom;
+    const defaultZoom = isTabletDevice()
+      ? desktopDefaultZoom - zoomStep * 3
+      : isDesktopDevice()
+        ? desktopDefaultZoom - zoomStep * 2
+        : mobileDefaultZoom;
     const tabletDisplaySettings = {
       zoom: 3,
       horizontalRatio: 0,
@@ -475,6 +480,10 @@
 
     function isTabletDevice() {
       return window.matchMedia("(min-width: 800px) and (pointer: coarse)").matches;
+    }
+
+    function isDesktopDevice() {
+      return window.matchMedia("(pointer: fine)").matches;
     }
 
     function isHandheldAppleDevice() {
